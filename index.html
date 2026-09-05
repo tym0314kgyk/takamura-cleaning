@@ -31,6 +31,7 @@
     .btn-primary{background:var(--accent);color:#fff}
     .btn-secondary{background:#e9edf3;color:var(--text)}
     .btn-success{background:var(--ok);color:#fff}
+    button:disabled{opacity:.45;cursor:not-allowed}
     .btn-ghost{background:transparent;border:1px solid var(--line);color:var(--text)}
     .home-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
     .home-grid button{min-height:110px;font-size:20px}
@@ -153,7 +154,7 @@
         </div>
       </div>
 
-      <button id="saveReception" class="btn-success" style="width:100%;margin-top:14px">受付を保存</button>
+      <button id="saveReception" class="btn-success" style="width:100%;margin-top:14px" disabled>受取完了</button>
       <div id="rMessage"></div>
     </div>
   </section>
@@ -192,6 +193,7 @@
             </div>
           </div>
           <div id="hMessage"></div>
+          <button id="completeHandover" class="btn-success hidden" style="width:100%;margin-top:12px">引渡完了</button>
         </div>
       </div>
     </div>
@@ -231,6 +233,7 @@
       {customer:"CUST-001", customerName:"鈴木 颯太", cloth:"ITEM-1003", type:"ズボン", method:"ドライ", other:"紺", delivered:false}
     ],
     selectedCloth:null,
+    matchedHandoverCloth:null,
     scanTarget:null,
     qr:null
   };
@@ -345,6 +348,22 @@
     openScanner("hCloth", ()=>checkHandoverCloth());
   };
 
+  function updateReceptionCompleteButton(){
+    const ready =
+      $("rCustomer").value.trim() &&
+      $("rCloth").value.trim() &&
+      $("rMethod").value &&
+      $("rType").value &&
+      $("rOther").value.trim();
+
+    $("saveReception").disabled = !ready;
+  }
+
+  ["rCustomer","rCloth","rMethod","rType","rOther"].forEach(id=>{
+    $(id).addEventListener("input", updateReceptionCompleteButton);
+    $(id).addEventListener("change", updateReceptionCompleteButton);
+  });
+
   $("saveReception").onclick=()=>{
     const customer=$("rCustomer").value.trim();
     const cloth=$("rCloth").value.trim();
@@ -352,24 +371,33 @@
     const type=$("rType").value;
     const other=$("rOther").value.trim();
 
-    if(!customer||!cloth||!method||!type){
-      $("rMessage").innerHTML='<div class="message danger">必須項目を入力してください。</div>';
+    if(!customer||!cloth||!method||!type||!other){
+      $("rMessage").innerHTML='<div class="message danger">すべての情報を入力してください。</div>';
       return;
     }
-    if(state.records.some(r=>r.cloth===cloth && !r.delivered)){
+
+    if(state.records.some(r=>r.cloth===cloth)){
       $("rMessage").innerHTML='<div class="message danger">この衣類QRはすでに預かり中です。</div>';
       return;
     }
 
     const customerName = customer==="CUST-001" ? "鈴木 颯太" : customer;
-    state.records.push({customer,customerName,cloth,type,method,other,delivered:false});
-    $("rMessage").innerHTML='<div class="message ok">✓ 受付を保存しました。</div>';
+    state.records.push({customer,customerName,cloth,type,method,other});
+
+    $("rMessage").innerHTML='<div class="message ok">✓ 受取完了しました。</div>';
+
+    $("rCustomer").value="";
+    $("rCloth").value="";
+    $("rMethod").value="";
+    $("rType").value="";
+    $("rOther").value="";
+    updateReceptionCompleteButton();
     renderRecords();
   };
 
   function loadHandoverCustomer(){
     const customer=$("hCustomer").value.trim();
-    const items=state.records.filter(r=>r.customer===customer && !r.delivered);
+    const items=state.records.filter(r=>r.customer===customer);
 
     $("handoverListWrap").classList.remove("hidden");
 
@@ -389,7 +417,7 @@
   function renderHandoverList(customer){
     const list=$("handoverList");
     list.innerHTML="";
-    const items=state.records.filter(r=>r.customer===customer && !r.delivered);
+    const items=state.records.filter(r=>r.customer===customer);
 
     items.forEach(item=>{
       const btn=document.createElement("button");
@@ -407,8 +435,10 @@
         document.querySelectorAll(".receipt-item").forEach(x=>x.style.outline="none");
         btn.style.outline="3px solid #9ec5ff";
         $("selectedItemText").textContent=`${item.type}（${item.cloth}）を確認します`;
+        state.matchedHandoverCloth=null;
         $("hCloth").value="";
         $("hMessage").innerHTML="";
+        $("completeHandover").classList.add("hidden");
         $("scanPanel").classList.remove("hidden");
       };
       list.appendChild(btn);
@@ -435,24 +465,43 @@
       return;
     }
 
-    const rec=state.records.find(r=>r.cloth===scanned && !r.delivered);
+    const rec=state.records.find(r=>r.cloth===scanned);
     if(!rec || rec.customer!==customer){
       $("hMessage").innerHTML='<div class="message danger">⚠ この衣類は別のお客様のものです。</div>';
       return;
     }
 
-    // 引渡完了した衣類は、預かりデータから削除
-    const index = state.records.findIndex(r => r.cloth === scanned && r.customer === customer);
-    if(index !== -1){
-      state.records.splice(index, 1);
+    state.matchedHandoverCloth = scanned;
+    $("hMessage").innerHTML='<div class="message ok">✓ 情報が一致しました。「引渡完了」を押してください。</div>';
+    $("completeHandover").classList.remove("hidden");
+  }
+
+  $("completeHandover").onclick=()=>{
+    const customer=$("hCustomer").value.trim();
+    const cloth=state.matchedHandoverCloth;
+
+    if(!cloth){
+      $("hMessage").innerHTML='<div class="message danger">先に衣類QRの一致を確認してください。</div>';
+      return;
     }
 
-    $("hMessage").innerHTML='<div class="message ok">✓ 一致しました。引渡完了です。衣類データを削除しました。</div>';
-    state.selectedCloth=null;
+    const index = state.records.findIndex(r => r.cloth===cloth && r.customer===customer);
+    if(index===-1){
+      $("hMessage").innerHTML='<div class="message danger">預かりデータが見つかりません。</div>';
+      return;
+    }
+
+    state.records.splice(index,1);
+
+    $("hMessage").innerHTML='<div class="message ok">✓ 引渡完了しました。預かりデータから削除しました。</div>';
+    $("completeHandover").classList.add("hidden");
     $("hCloth").value="";
+    state.selectedCloth=null;
+    state.matchedHandoverCloth=null;
+
     renderRecords();
-    setTimeout(()=>renderHandoverList(customer),500);
-  }
+    setTimeout(()=>renderHandoverList(customer),400);
+  };
 
   function renderRecords(){
     const box=$("records");
@@ -462,7 +511,7 @@
       div.className="record";
       div.innerHTML=`
         <strong>${esc(r.customerName)}｜${esc(r.type)}</strong>
-        <small>${esc(r.cloth)} / ${esc(r.method)} / ${esc(r.other||"特記事項なし")} / ${r.delivered?"引渡済":"預かり中"}</small>`;
+        <small>${esc(r.cloth)} / ${esc(r.method)} / ${esc(r.other||"特記事項なし")} / 預かり中</small>`;
       box.appendChild(div);
     });
   }
