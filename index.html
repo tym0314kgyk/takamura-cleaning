@@ -244,6 +244,9 @@
             </div>
           </div>
           <div id="hMessage"></div>
+          <div id="handoverConfirmText" class="message warn hidden" style="margin-top:12px">
+            以下の内容で引き渡しをします。内容をご確認ください。
+          </div>
           <button id="completeHandover" class="btn-success hidden" style="width:100%;margin-top:12px">引渡完了</button>
         </div>
 
@@ -540,6 +543,7 @@
         $("hCloth").value="";
         $("hMessage").innerHTML="";
         $("completeHandover").classList.add("hidden");
+        $("handoverConfirmText").classList.add("hidden");
         $("scanPanel").classList.remove("hidden");
       };
       list.appendChild(btn);
@@ -573,7 +577,8 @@
     }
 
     state.matchedHandoverCloth = scanned;
-    $("hMessage").innerHTML='<div class="message ok">✓ 情報が一致しました。「引渡完了」を押してください。</div>';
+    $("hMessage").innerHTML='<div class="message ok">✓ お客様と衣類の情報が一致しました。</div>';
+    $("handoverConfirmText").classList.remove("hidden");
     $("completeHandover").classList.remove("hidden");
   }
 
@@ -596,6 +601,7 @@
 
     $("hMessage").innerHTML='<div class="message ok">✓ 1点の引渡が完了しました。続けて次の衣類を処理できます。</div>';
     $("completeHandover").classList.add("hidden");
+    $("handoverConfirmText").classList.add("hidden");
     $("hCloth").value="";
     state.selectedCloth=null;
     state.matchedHandoverCloth=null;
@@ -612,6 +618,7 @@
     $("handoverListWrap").classList.add("hidden");
     $("scanPanel").classList.add("hidden");
     $("completeHandover").classList.add("hidden");
+    $("handoverConfirmText").classList.add("hidden");
     state.selectedCloth=null;
     state.matchedHandoverCloth=null;
     show("home");
