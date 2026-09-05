@@ -198,7 +198,7 @@
   </section>
 
   <section class="card">
-    <div class="label">受付記録</div>
+    <div class="label">現在お預かり中の衣類</div>
     <div id="records"></div>
   </section>
 </div>
@@ -441,9 +441,15 @@
       return;
     }
 
-    rec.delivered=true;
-    $("hMessage").innerHTML='<div class="message ok">✓ 一致しました。引渡できます。</div>';
+    // 引渡完了した衣類は、預かりデータから削除
+    const index = state.records.findIndex(r => r.cloth === scanned && r.customer === customer);
+    if(index !== -1){
+      state.records.splice(index, 1);
+    }
+
+    $("hMessage").innerHTML='<div class="message ok">✓ 一致しました。引渡完了です。衣類データを削除しました。</div>';
     state.selectedCloth=null;
+    $("hCloth").value="";
     renderRecords();
     setTimeout(()=>renderHandoverList(customer),500);
   }
