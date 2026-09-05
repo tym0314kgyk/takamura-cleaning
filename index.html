@@ -154,7 +154,10 @@
         </div>
       </div>
 
-      <button id="saveReception" class="btn-success" style="width:100%;margin-top:14px" disabled>受取完了</button>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px">
+        <button id="saveReception" class="btn-success" disabled>受取完了</button>
+        <button id="finishReception" class="btn-secondary">受取終了</button>
+      </div>
       <div id="rMessage"></div>
     </div>
   </section>
@@ -195,6 +198,8 @@
           <div id="hMessage"></div>
           <button id="completeHandover" class="btn-success hidden" style="width:100%;margin-top:12px">引渡完了</button>
         </div>
+
+        <button id="finishHandoverSession" class="btn-secondary" style="width:100%;margin-top:14px">引渡終了</button>
       </div>
     </div>
   </section>
@@ -384,15 +389,30 @@
     const customerName = customer==="CUST-001" ? "鈴木 颯太" : customer;
     state.records.push({customer,customerName,cloth,type,method,other});
 
-    $("rMessage").innerHTML='<div class="message ok">✓ 受取完了しました。</div>';
+    $("rMessage").innerHTML='<div class="message ok">✓ 1点の受取が完了しました。続けて次の衣類を登録できます。</div>';
 
-    $("rCustomer").value="";
+    // 同じお客様の受付を続けられるよう、客QRは保持する
     $("rCloth").value="";
     $("rMethod").value="";
     $("rType").value="";
     $("rOther").value="";
     updateReceptionCompleteButton();
     renderRecords();
+
+    // 次の衣類QR入力へ
+    setTimeout(() => $("rCloth").focus(), 100);
+  };
+
+  $("finishReception").onclick=()=>{
+    // 受付セッションを終了してホームへ戻る
+    $("rCustomer").value="";
+    $("rCloth").value="";
+    $("rMethod").value="";
+    $("rType").value="";
+    $("rOther").value="";
+    $("rMessage").innerHTML="";
+    updateReceptionCompleteButton();
+    show("home");
   };
 
   function loadHandoverCustomer(){
@@ -493,7 +513,7 @@
 
     state.records.splice(index,1);
 
-    $("hMessage").innerHTML='<div class="message ok">✓ 引渡完了しました。預かりデータから削除しました。</div>';
+    $("hMessage").innerHTML='<div class="message ok">✓ 1点の引渡が完了しました。続けて次の衣類を処理できます。</div>';
     $("completeHandover").classList.add("hidden");
     $("hCloth").value="";
     state.selectedCloth=null;
@@ -501,6 +521,19 @@
 
     renderRecords();
     setTimeout(()=>renderHandoverList(customer),400);
+  };
+
+  $("finishHandoverSession").onclick=()=>{
+    $("hCustomer").value="";
+    $("hCloth").value="";
+    $("hMessage").innerHTML="";
+    $("handoverList").innerHTML="";
+    $("handoverListWrap").classList.add("hidden");
+    $("scanPanel").classList.add("hidden");
+    $("completeHandover").classList.add("hidden");
+    state.selectedCloth=null;
+    state.matchedHandoverCloth=null;
+    show("home");
   };
 
   function renderRecords(){
