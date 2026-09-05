@@ -149,16 +149,64 @@
         </div>
 
         <div class="step">
-          <div class="step-head"><div class="num">5</div><strong>その他事項</strong></div>
-          <input id="rOther" placeholder="例：黒、シミあり、ボタン注意" />
+          <div class="step-head"><div class="num">5</div><strong>色</strong></div>
+          <select id="rColor">
+            <option value="">選択</option>
+            <option>白</option>
+            <option>黒</option>
+            <option>グレー</option>
+            <option>紺</option>
+            <option>青</option>
+            <option>水色</option>
+            <option>赤</option>
+            <option>ピンク</option>
+            <option>緑</option>
+            <option>黄</option>
+            <option>ベージュ</option>
+            <option>茶</option>
+            <option>紫</option>
+            <option>その他</option>
+          </select>
+        </div>
+
+        <div class="step">
+          <div class="step-head"><div class="num">6</div><strong>その他事項</strong></div>
+          <input id="rOther" placeholder="例：シミあり、ボタン注意" />
         </div>
       </div>
 
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px">
-        <button id="saveReception" class="btn-success" disabled>受取完了</button>
+        <button id="saveReception" class="btn-success" disabled>内容を確認</button>
         <button id="finishReception" class="btn-secondary">受取終了</button>
       </div>
       <div id="rMessage"></div>
+    </div>
+  </section>
+
+  <section id="receptionConfirm" class="hidden">
+    <div class="card">
+      <div class="screen-title">
+        <button class="btn-ghost" id="backToReceptionEdit">←</button>
+        <h2>受付内容の確認</h2>
+      </div>
+
+      <div class="message warn" style="margin-top:0">
+        以下の内容で受付を確定しますか？
+      </div>
+
+      <div class="stack" style="margin-top:14px">
+        <div class="step"><div class="label">客QRコード</div><strong id="cCustomer">-</strong></div>
+        <div class="step"><div class="label">服QRコード</div><strong id="cCloth">-</strong></div>
+        <div class="step"><div class="label">クリーニング方法</div><strong id="cMethod">-</strong></div>
+        <div class="step"><div class="label">服の種類</div><strong id="cType">-</strong></div>
+        <div class="step"><div class="label">色</div><strong id="cColor">-</strong></div>
+        <div class="step"><div class="label">その他事項</div><strong id="cOther">-</strong></div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px">
+        <button id="editReception" class="btn-secondary">修正する</button>
+        <button id="confirmReception" class="btn-success">受取完了</button>
+      </div>
     </div>
   </section>
 
@@ -240,7 +288,7 @@
   };
 
   function show(id){
-    ["home","reception","handover"].forEach(s => $(s).classList.toggle("hidden", s!==id));
+    ["home","reception","receptionConfirm","handover"].forEach(s => $(s).classList.toggle("hidden", s!==id));
     window.scrollTo({top:0,behavior:"smooth"});
   }
 
@@ -355,12 +403,13 @@
       $("rCloth").value.trim() &&
       $("rMethod").value &&
       $("rType").value &&
+      $("rColor").value &&
       $("rOther").value.trim();
 
     $("saveReception").disabled = !ready;
   }
 
-  ["rCustomer","rCloth","rMethod","rType","rOther"].forEach(id=>{
+  ["rCustomer","rCloth","rMethod","rType","rColor","rOther"].forEach(id=>{
     $(id).addEventListener("input", updateReceptionCompleteButton);
     $(id).addEventListener("change", updateReceptionCompleteButton);
   });
@@ -370,9 +419,10 @@
     const cloth=$("rCloth").value.trim();
     const method=$("rMethod").value;
     const type=$("rType").value;
+    const color=$("rColor").value;
     const other=$("rOther").value.trim();
 
-    if(!customer||!cloth||!method||!type||!other){
+    if(!customer||!cloth||!method||!type||!color||!other){
       $("rMessage").innerHTML='<div class="message danger">すべての情報を入力してください。</div>';
       return;
     }
@@ -382,20 +432,54 @@
       return;
     }
 
-    const customerName = customer==="CUST-001" ? "鈴木 颯太" : customer;
-    state.records.push({customer,customerName,cloth,type,method,other});
+    $("cCustomer").textContent=customer;
+    $("cCloth").textContent=cloth;
+    $("cMethod").textContent=method;
+    $("cType").textContent=type;
+    $("cColor").textContent=color;
+    $("cOther").textContent=other;
 
-    $("rMessage").innerHTML='<div class="message ok">✓ 1点の受取が完了しました。続けて次の衣類を登録できます。</div>';
+    $("rMessage").innerHTML="";
+    show("receptionConfirm");
+  };
+
+  $("backToReceptionEdit").onclick=()=>show("reception");
+  $("editReception").onclick=()=>show("reception");
+
+  $("confirmReception").onclick=()=>{
+    const customer=$("rCustomer").value.trim();
+    const cloth=$("rCloth").value.trim();
+    const method=$("rMethod").value;
+    const type=$("rType").value;
+    const color=$("rColor").value;
+    const other=$("rOther").value.trim();
+
+    if(!customer||!cloth||!method||!type||!color||!other){
+      show("reception");
+      $("rMessage").innerHTML='<div class="message danger">入力内容をもう一度確認してください。</div>';
+      return;
+    }
+
+    if(state.records.some(r=>r.cloth===cloth)){
+      show("reception");
+      $("rMessage").innerHTML='<div class="message danger">この衣類QRはすでに預かり中です。</div>';
+      return;
+    }
+
+    const customerName = customer==="CUST-001" ? "鈴木 颯太" : customer;
+    state.records.push({customer,customerName,cloth,type,method,color,other});
 
     // 同じお客様の受付を続けられるよう、客QRは保持する
     $("rCloth").value="";
     $("rMethod").value="";
     $("rType").value="";
+    $("rColor").value="";
     $("rOther").value="";
     updateReceptionCompleteButton();
     renderRecords();
 
-    // 次の衣類QR入力へ
+    show("reception");
+    $("rMessage").innerHTML='<div class="message ok">✓ 1点の受取が完了しました。続けて次の衣類を登録できます。</div>';
     setTimeout(() => $("rCloth").focus(), 100);
   };
 
@@ -405,6 +489,7 @@
     $("rCloth").value="";
     $("rMethod").value="";
     $("rType").value="";
+    $("rColor").value="";
     $("rOther").value="";
     $("rMessage").innerHTML="";
     updateReceptionCompleteButton();
