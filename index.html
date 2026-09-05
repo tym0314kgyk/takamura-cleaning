@@ -232,11 +232,7 @@
 (() => {
   const $ = id => document.getElementById(id);
   const state = {
-    records: [
-      {customer:"CUST-001", customerName:"鈴木 颯太", cloth:"ITEM-1001", type:"コート", method:"ドライ", other:"黒 / シミあり", delivered:false},
-      {customer:"CUST-001", customerName:"鈴木 颯太", cloth:"ITEM-1002", type:"ワイシャツ", method:"通常", other:"白", delivered:false},
-      {customer:"CUST-001", customerName:"鈴木 颯太", cloth:"ITEM-1003", type:"ズボン", method:"ドライ", other:"紺", delivered:false}
-    ],
+    records: [],
     selectedCloth:null,
     matchedHandoverCloth:null,
     scanTarget:null,
