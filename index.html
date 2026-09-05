@@ -61,6 +61,7 @@
     .record:last-child{border-bottom:0}
     .record strong{display:block}
     .record small{color:var(--muted)}
+    .hint{font-size:12px;color:var(--muted);margin-top:6px}
     .top-note{font-size:12px;color:var(--muted);background:#f1f5f9;border-radius:10px;padding:9px 10px;margin-top:10px}
 
     #scannerModal{
@@ -207,6 +208,11 @@
     <div class="screen-title">
       <h2>QRコードを読み取り</h2>
     </div>
+    <div style="margin-bottom:10px">
+      <div class="label">使用するカメラ</div>
+      <select id="cameraSelect"></select>
+      <div class="hint">背面カメラが自動選択されない場合は、ここから切り替えてください。</div>
+    </div>
     <div id="reader"></div>
     <div id="scannerMessage" class="top-note">QRコードをカメラの中央に合わせてください。</div>
     <div class="scanner-actions">
@@ -242,56 +248,87 @@
   async function openScanner(targetId, afterScan){
     state.scanTarget = {targetId, afterScan};
     $("scannerModal").classList.remove("hidden");
-    $("scannerMessage").textContent="カメラを起動しています…";
+    $("scannerMessage").textContent="カメラを確認しています…";
 
     try{
+      const cameras = await Html5Qrcode.getCameras();
+      if(!cameras || cameras.length===0) throw new Error("カメラが見つかりません");
+
+      const select = $("cameraSelect");
+      select.innerHTML = "";
+
+      cameras.forEach((cam, index) => {
+        const opt = document.createElement("option");
+        opt.value = cam.id;
+        opt.textContent = cam.label || `カメラ ${index + 1}`;
+        select.appendChild(opt);
+      });
+
+      // 「back / rear / environment / 背面 / 外向き」を優先
+      const preferred = cameras.find(cam =>
+        /back|rear|environment|背面|外向き/i.test(cam.label || "")
+      );
+
+      // ラベルが判別できないiPhoneでは、複数台ある場合は最後のカメラを
+      // 背面候補として選ぶ（端末によって順序が異なるため、手動切替も残す）
+      const defaultCamera = preferred || cameras[cameras.length - 1];
+      select.value = defaultCamera.id;
+
+      await startCamera(defaultCamera.id);
+
+      select.onchange = async () => {
+        $("scannerMessage").textContent="カメラを切り替えています…";
+        await stopCameraOnly();
+        await startCamera(select.value);
+      };
+    }catch(e){
+      console.error(e);
+      $("scannerMessage").textContent="カメラを起動できませんでした。ブラウザのカメラ許可を確認してください。";
+    }
+  }
+
+  async function startCamera(cameraId){
+    try{
+      if(state.qr){
+        try { await state.qr.clear(); } catch(e) {}
+      }
       state.qr = new Html5Qrcode("reader");
 
       await state.qr.start(
-        { facingMode: { exact: "environment" } },
+        cameraId,
         { fps:10, qrbox:{width:250,height:250}, aspectRatio:1.0 },
         async decodedText => {
-          $(targetId).value = decodedText;
-          if(state.scanTarget?.afterScan) state.scanTarget.afterScan(decodedText);
+          $(state.scanTarget.targetId).value = decodedText;
+          if(state.scanTarget?.afterScan) {
+            state.scanTarget.afterScan(decodedText);
+          }
           await closeScanner();
         },
         () => {}
       );
-      $("scannerMessage").textContent="QRコードをカメラの中央に合わせてください。";
+
+      const selectedText = $("cameraSelect").selectedOptions[0]?.textContent || "";
+      $("scannerMessage").textContent =
+        selectedText ? `使用中：${selectedText}` : "QRコードをカメラの中央に合わせてください。";
     }catch(e){
-      try{
-        if(state.qr){
-          await state.qr.clear().catch(()=>{});
-        }
-        state.qr = new Html5Qrcode("reader");
-        await state.qr.start(
-          { facingMode: "environment" },
-          { fps:10, qrbox:{width:250,height:250}, aspectRatio:1.0 },
-          async decodedText => {
-            $(targetId).value = decodedText;
-            if(state.scanTarget?.afterScan) state.scanTarget.afterScan(decodedText);
-            await closeScanner();
-          },
-          () => {}
-        );
-        $("scannerMessage").textContent="背面カメラでQRコードを読み取っています。";
-      }catch(e2){
-        $("scannerMessage").textContent="背面カメラを起動できませんでした。ブラウザのカメラ許可やカメラ設定を確認してください。";
-      }
+      console.error(e);
+      $("scannerMessage").textContent="このカメラを起動できませんでした。別のカメラを選んでください。";
+    }
+  }
+
+  async function stopCameraOnly(){
+    if(state.qr){
+      try { await state.qr.stop(); } catch(e) {}
+      try { await state.qr.clear(); } catch(e) {}
+      state.qr = null;
+      $("reader").innerHTML = "";
     }
   }
 
   async function closeScanner(){
-    try{
-      if(state.qr){
-        await state.qr.stop().catch(()=>{});
-        await state.qr.clear().catch(()=>{});
-      }
-    }finally{
-      state.qr=null;
-      $("scannerModal").classList.add("hidden");
-      $("reader").innerHTML="";
-    }
+    await stopCameraOnly();
+    $("scannerModal").classList.add("hidden");
+    $("reader").innerHTML="";
   }
 
   $("closeScanner").onclick=closeScanner;
