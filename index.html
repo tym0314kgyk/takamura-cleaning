@@ -247,16 +247,9 @@
     try{
       state.qr = new Html5Qrcode("reader");
 
-      const cameras = await Html5Qrcode.getCameras();
-      if(!cameras || cameras.length===0) throw new Error("カメラが見つかりません");
-
-      let cameraId = cameras[0].id;
-      const back = cameras.find(c => /back|rear|environment/i.test(c.label));
-      if(back) cameraId = back.id;
-
       await state.qr.start(
-        cameraId,
-        { fps:10, qrbox:{width:250,height:250} },
+        { facingMode: { exact: "environment" } },
+        { fps:10, qrbox:{width:250,height:250}, aspectRatio:1.0 },
         async decodedText => {
           $(targetId).value = decodedText;
           if(state.scanTarget?.afterScan) state.scanTarget.afterScan(decodedText);
@@ -266,7 +259,25 @@
       );
       $("scannerMessage").textContent="QRコードをカメラの中央に合わせてください。";
     }catch(e){
-      $("scannerMessage").textContent="カメラを起動できませんでした。ブラウザのカメラ許可を確認してください。";
+      try{
+        if(state.qr){
+          await state.qr.clear().catch(()=>{});
+        }
+        state.qr = new Html5Qrcode("reader");
+        await state.qr.start(
+          { facingMode: "environment" },
+          { fps:10, qrbox:{width:250,height:250}, aspectRatio:1.0 },
+          async decodedText => {
+            $(targetId).value = decodedText;
+            if(state.scanTarget?.afterScan) state.scanTarget.afterScan(decodedText);
+            await closeScanner();
+          },
+          () => {}
+        );
+        $("scannerMessage").textContent="背面カメラでQRコードを読み取っています。";
+      }catch(e2){
+        $("scannerMessage").textContent="背面カメラを起動できませんでした。ブラウザのカメラ許可やカメラ設定を確認してください。";
+      }
     }
   }
 
