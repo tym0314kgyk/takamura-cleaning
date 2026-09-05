@@ -1,0 +1,420 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#ffffff" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="高村クリーニング" />
+  <title>高村クリーニング店</title>
+  <style>
+    :root{
+      --bg:#f5f6f8;
+      --card:#ffffff;
+      --text:#20242b;
+      --muted:#6b7280;
+      --line:#d8dde6;
+      --accent:#1f6feb;
+      --accent-soft:#eaf2ff;
+      --ok:#17803d;
+      --ok-soft:#eaf8ef;
+      --danger:#b42318;
+      --danger-soft:#fff0ef;
+      --warning:#9a6700;
+      --warning-soft:#fff8df;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      background:var(--bg);
+      color:var(--text);
+      font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+      -webkit-font-smoothing:antialiased;
+    }
+    .app{max-width:560px;margin:0 auto;min-height:100vh;padding:16px 14px 40px}
+    .brand{padding:8px 4px 14px}
+    .brand h1{font-size:23px;margin:0 0 4px}
+    .brand p{margin:0;color:var(--muted);font-size:14px}
+    .card{
+      background:var(--card);
+      border:1px solid var(--line);
+      border-radius:18px;
+      padding:16px;
+      margin:12px 0;
+    }
+    .hidden{display:none!important}
+    .screen-title{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+    .screen-title h2{font-size:20px;margin:0;flex:1}
+    button{
+      appearance:none;border:0;border-radius:14px;padding:14px 16px;
+      font:inherit;font-weight:700;cursor:pointer;min-height:48px;
+    }
+    .btn-primary{background:var(--accent);color:#fff}
+    .btn-secondary{background:#e9edf3;color:var(--text)}
+    .btn-success{background:var(--ok);color:#fff}
+    .btn-danger{background:var(--danger);color:#fff}
+    .btn-ghost{background:transparent;border:1px solid var(--line);color:var(--text)}
+    .home-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    .home-grid button{min-height:110px;font-size:20px}
+    .label{font-size:13px;font-weight:800;color:#4b5563;margin-bottom:7px}
+    input,select{
+      width:100%;padding:14px;border:1px solid var(--line);
+      border-radius:12px;background:#fff;color:var(--text);font-size:16px;
+    }
+    .stack{display:grid;gap:10px}
+    .step{
+      border:1px solid var(--line);
+      border-radius:14px;padding:13px;background:#fafbfc;
+    }
+    .step.active{border-color:#9ec5ff;background:var(--accent-soft)}
+    .step.done{border-color:#9ed7b1;background:var(--ok-soft)}
+    .step-head{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+    .num{
+      width:28px;height:28px;border-radius:999px;background:#e5e7eb;
+      display:grid;place-items:center;font-weight:800;font-size:13px;
+    }
+    .step.active .num{background:var(--accent);color:#fff}
+    .step.done .num{background:var(--ok);color:#fff}
+    .qr-input{display:grid;grid-template-columns:1fr auto;gap:8px}
+    .qr-btn{padding:12px 14px;white-space:nowrap}
+    .hint{color:var(--muted);font-size:12px;margin-top:6px}
+    .summary{
+      border-radius:14px;background:#f8fafc;border:1px solid var(--line);
+      padding:12px;margin-top:10px;
+    }
+    .summary-row{display:flex;justify-content:space-between;gap:12px;padding:5px 0}
+    .summary-row span:first-child{color:var(--muted)}
+    .pill{
+      display:inline-block;padding:5px 9px;border-radius:999px;
+      background:#eef2f7;font-size:12px;margin:2px 4px 2px 0
+    }
+    .message{padding:12px;border-radius:12px;margin-top:10px;font-weight:700}
+    .message.ok{background:var(--ok-soft);color:var(--ok)}
+    .message.danger{background:var(--danger-soft);color:var(--danger)}
+    .message.warn{background:var(--warning-soft);color:var(--warning)}
+    .receipt-list{display:grid;gap:10px;margin-top:12px}
+    .receipt-item{
+      border:1px solid var(--line);border-radius:14px;padding:12px;background:#fff;
+      display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:center
+    }
+    .receipt-item.done{background:var(--ok-soft);border-color:#a7d9b8}
+    .receipt-icon{
+      width:42px;height:42px;border-radius:12px;background:#eef2f7;
+      display:grid;place-items:center;font-size:22px
+    }
+    .receipt-name{font-weight:800}
+    .receipt-meta{font-size:12px;color:var(--muted);margin-top:3px}
+    .status{font-size:12px;font-weight:800}
+    .status.wait{color:var(--warning)}
+    .status.done{color:var(--ok)}
+    .actions{display:grid;gap:10px;margin-top:14px}
+    .two{grid-template-columns:1fr 1fr}
+    .record{
+      border-bottom:1px solid var(--line);padding:10px 0
+    }
+    .record:last-child{border-bottom:0}
+    .record strong{display:block}
+    .record small{color:var(--muted)}
+    .top-note{
+      font-size:12px;color:var(--muted);background:#f1f5f9;border-radius:10px;
+      padding:9px 10px;margin-top:10px
+    }
+    @media(max-width:380px){
+      .home-grid{grid-template-columns:1fr}
+      .two{grid-template-columns:1fr}
+      .qr-input{grid-template-columns:1fr}
+    }
+  </style>
+</head>
+<body>
+<div class="app">
+  <header class="brand">
+    <h1>高村クリーニング店</h1>
+    <p>受付・引渡 管理アプリ</p>
+  </header>
+
+  <section id="home" class="card">
+    <div class="label">業務を選択</div>
+    <div class="home-grid">
+      <button id="startReception" class="btn-primary">受付</button>
+      <button id="startHandover" class="btn-secondary">引渡</button>
+    </div>
+    <div class="top-note">試作版ではQR読み取りボタンを押すと、サンプルコードを自動入力します。実カメラ読取に後から差し替え可能です。</div>
+  </section>
+
+  <section id="reception" class="hidden">
+    <div class="card">
+      <div class="screen-title">
+        <button class="btn-ghost" id="backFromReception">←</button>
+        <h2>受付</h2>
+      </div>
+
+      <div class="stack">
+        <div class="step active" id="rStep1">
+          <div class="step-head"><div class="num">1</div><strong>客QRコード</strong></div>
+          <div class="qr-input">
+            <input id="rCustomer" placeholder="顧客QRコード" />
+            <button class="btn-primary qr-btn" data-sample="CUST-001" data-target="rCustomer">QR読取</button>
+          </div>
+        </div>
+
+        <div class="step" id="rStep2">
+          <div class="step-head"><div class="num">2</div><strong>服QRコード</strong></div>
+          <div class="qr-input">
+            <input id="rCloth" placeholder="衣類QRコード" />
+            <button class="btn-primary qr-btn" data-sample="ITEM-1001" data-target="rCloth">QR読取</button>
+          </div>
+        </div>
+
+        <div class="step" id="rStep3">
+          <div class="step-head"><div class="num">3</div><strong>クリーニング方法</strong></div>
+          <select id="rMethod">
+            <option value="">選択</option>
+            <option>通常</option>
+            <option>ドライ</option>
+            <option>ウェット</option>
+            <option>シミ抜き</option>
+          </select>
+        </div>
+
+        <div class="step" id="rStep4">
+          <div class="step-head"><div class="num">4</div><strong>服の種類</strong></div>
+          <select id="rType">
+            <option value="">選択</option>
+            <option>ワイシャツ</option>
+            <option>ズボン</option>
+            <option>ジャケット</option>
+            <option>コート</option>
+            <option>セーター</option>
+            <option>その他</option>
+          </select>
+        </div>
+
+        <div class="step" id="rStep5">
+          <div class="step-head"><div class="num">5</div><strong>その他事項</strong></div>
+          <input id="rOther" placeholder="例：黒、シミあり、ボタン注意" />
+        </div>
+      </div>
+
+      <div class="actions two">
+        <button id="saveReception" class="btn-success">受付を保存</button>
+        <button id="clearReception" class="btn-secondary">クリア</button>
+      </div>
+      <div id="rMessage"></div>
+    </div>
+  </section>
+
+  <section id="handover" class="hidden">
+    <div class="card">
+      <div class="screen-title">
+        <button class="btn-ghost" id="backFromHandover">←</button>
+        <h2>引渡</h2>
+      </div>
+
+      <div class="step active">
+        <div class="step-head"><div class="num">1</div><strong>客QRコードを読み取り</strong></div>
+        <div class="qr-input">
+          <input id="hCustomer" placeholder="顧客QRコード" />
+          <button id="loadCustomer" class="btn-primary qr-btn">QR読取</button>
+        </div>
+      </div>
+
+      <div id="handoverListWrap" class="hidden">
+        <div class="summary">
+          <div class="summary-row"><span>お客様</span><strong id="handoverCustomerName">-</strong></div>
+          <div class="summary-row"><span>受取予定</span><strong id="handoverCount">0点</strong></div>
+        </div>
+
+        <div class="label" style="margin-top:16px">受け取り一覧</div>
+        <div id="handoverList" class="receipt-list"></div>
+
+        <div id="scanPanel" class="hidden" style="margin-top:16px">
+          <div class="step active">
+            <div class="step-head"><div class="num">2</div><strong>選択した衣類のQRを読み取り</strong></div>
+            <div id="selectedItemText" class="hint" style="margin-bottom:8px"></div>
+            <div class="qr-input">
+              <input id="hCloth" placeholder="衣類QRコード" />
+              <button id="scanCloth" class="btn-primary qr-btn">QR読取</button>
+            </div>
+          </div>
+          <div id="hMessage"></div>
+        </div>
+
+        <button id="finishHandover" class="btn-success hidden" style="width:100%;margin-top:14px">引渡完了</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="label">受付記録</div>
+    <div id="records"></div>
+  </section>
+</div>
+
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  const state = {
+    records: [
+      {customer:"CUST-001", customerName:"鈴木 颯太", cloth:"ITEM-1001", type:"コート", method:"ドライ", other:"黒 / シミあり", delivered:false},
+      {customer:"CUST-001", customerName:"鈴木 颯太", cloth:"ITEM-1002", type:"ワイシャツ", method:"通常", other:"白", delivered:false},
+      {customer:"CUST-001", customerName:"鈴木 颯太", cloth:"ITEM-1003", type:"ズボン", method:"ドライ", other:"紺", delivered:false}
+    ],
+    selectedCloth:null
+  };
+
+  const screens = ["home","reception","handover"];
+  function show(id){
+    screens.forEach(s => $(s).classList.toggle("hidden", s!==id));
+    window.scrollTo({top:0,behavior:"smooth"});
+  }
+
+  $("startReception").addEventListener("click",()=>show("reception"));
+  $("startHandover").addEventListener("click",()=>show("handover"));
+  $("backFromReception").addEventListener("click",()=>show("home"));
+  $("backFromHandover").addEventListener("click",()=>show("home"));
+
+  document.querySelectorAll("[data-sample]").forEach(btn=>{
+    btn.addEventListener("click",()=>{
+      $(btn.dataset.target).value = btn.dataset.sample;
+    });
+  });
+
+  $("saveReception").addEventListener("click",()=>{
+    const customer=$("rCustomer").value.trim();
+    const cloth=$("rCloth").value.trim();
+    const method=$("rMethod").value;
+    const type=$("rType").value;
+    const other=$("rOther").value.trim();
+    if(!customer||!cloth||!method||!type){
+      $("rMessage").innerHTML='<div class="message danger">必須項目を入力してください。</div>';
+      return;
+    }
+    if(state.records.some(r=>r.cloth===cloth && !r.delivered)){
+      $("rMessage").innerHTML='<div class="message danger">この衣類QRはすでに預かり中です。</div>';
+      return;
+    }
+    const customerName = customer==="CUST-001" ? "鈴木 颯太" : customer;
+    state.records.push({customer,customerName,cloth,type,method,other,delivered:false});
+    $("rMessage").innerHTML='<div class="message ok">✓ 受付を保存しました。</div>';
+    renderRecords();
+  });
+
+  $("clearReception").addEventListener("click",()=>{
+    ["rCustomer","rCloth","rOther"].forEach(id=>$(id).value="");
+    $("rMethod").value="";
+    $("rType").value="";
+    $("rMessage").innerHTML="";
+  });
+
+  $("loadCustomer").addEventListener("click",()=>{
+    if(!$("hCustomer").value.trim()) $("hCustomer").value="CUST-001";
+    loadHandoverCustomer();
+  });
+
+  function loadHandoverCustomer(){
+    const customer=$("hCustomer").value.trim();
+    const items=state.records.filter(r=>r.customer===customer && !r.delivered);
+    if(!items.length){
+      $("handoverListWrap").classList.remove("hidden");
+      $("handoverCustomerName").textContent=customer||"-";
+      $("handoverCount").textContent="0点";
+      $("handoverList").innerHTML='<div class="message warn">受取可能な衣類がありません。</div>';
+      $("scanPanel").classList.add("hidden");
+      $("finishHandover").classList.add("hidden");
+      return;
+    }
+    $("handoverListWrap").classList.remove("hidden");
+    $("handoverCustomerName").textContent=items[0].customerName;
+    $("handoverCount").textContent=`${items.length}点`;
+    renderHandoverList(customer);
+  }
+
+  function renderHandoverList(customer){
+    const list=$("handoverList");
+    list.innerHTML="";
+    const items=state.records.filter(r=>r.customer===customer && !r.delivered);
+    items.forEach(item=>{
+      const btn=document.createElement("button");
+      btn.className="receipt-item";
+      btn.style.width="100%";
+      btn.innerHTML=`
+        <div class="receipt-icon">👕</div>
+        <div style="text-align:left">
+          <div class="receipt-name">${esc(item.type)}</div>
+          <div class="receipt-meta">${esc(item.method)} / ${esc(item.other||"特記事項なし")}</div>
+        </div>
+        <div class="status wait">選択</div>`;
+      btn.addEventListener("click",()=>{
+        state.selectedCloth=item.cloth;
+        document.querySelectorAll(".receipt-item").forEach(x=>x.style.outline="none");
+        btn.style.outline="3px solid #9ec5ff";
+        $("selectedItemText").textContent=`${item.type}（${item.cloth}）を確認します`;
+        $("hCloth").value="";
+        $("hMessage").innerHTML="";
+        $("scanPanel").classList.remove("hidden");
+      });
+      list.appendChild(btn);
+    });
+
+    if(items.length===0){
+      list.innerHTML='<div class="message ok">✓ すべての衣類を確認しました。</div>';
+      $("scanPanel").classList.add("hidden");
+      $("finishHandover").classList.remove("hidden");
+    }
+  }
+
+  $("scanCloth").addEventListener("click",()=>{
+    if(!state.selectedCloth) return;
+    if(!$("hCloth").value.trim()) $("hCloth").value=state.selectedCloth;
+    const scanned=$("hCloth").value.trim();
+
+    if(scanned!==state.selectedCloth){
+      $("hMessage").innerHTML='<div class="message danger">⚠ 選択した衣類とQRコードが一致しません。</div>';
+      return;
+    }
+    const rec=state.records.find(r=>r.cloth===scanned && !r.delivered);
+    const customer=$("hCustomer").value.trim();
+    if(!rec || rec.customer!==customer){
+      $("hMessage").innerHTML='<div class="message danger">⚠ この衣類は別のお客様のものです。</div>';
+      return;
+    }
+
+    rec.delivered=true;
+    $("hMessage").innerHTML='<div class="message ok">✓ 一致しました。引渡できます。</div>';
+    state.selectedCloth=null;
+    renderRecords();
+    setTimeout(()=>renderHandoverList(customer),300);
+  });
+
+  $("finishHandover").addEventListener("click",()=>{
+    $("handoverListWrap").innerHTML='<div class="message ok">✓ 引渡が完了しました。</div>';
+  });
+
+  function renderRecords(){
+    const box=$("records");
+    if(!state.records.length){
+      box.innerHTML='<div class="hint">記録はありません。</div>';
+      return;
+    }
+    box.innerHTML="";
+    state.records.slice().reverse().forEach(r=>{
+      const div=document.createElement("div");
+      div.className="record";
+      div.innerHTML=`
+        <strong>${esc(r.customerName)}｜${esc(r.type)}</strong>
+        <small>${esc(r.cloth)} / ${esc(r.method)} / ${esc(r.other||"特記事項なし")} / ${r.delivered?"引渡済":"預かり中"}</small>`;
+      box.appendChild(div);
+    });
+  }
+
+  function esc(s){
+    return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]));
+  }
+
+  renderRecords();
+})();
+</script>
+</body>
+</html>
