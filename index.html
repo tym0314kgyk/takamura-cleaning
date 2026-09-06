@@ -295,6 +295,21 @@
 (() => {
   const $ = id => document.getElementById(id);
 
+  function prepDone(record){
+    return record && (record.prepStatus==="complete" || record.ready===true);
+  }
+
+  function setPrepComplete(clothId){
+    const index=state.records.findIndex(r=>r.cloth===clothId);
+    if(index<0) return null;
+    state.records[index] = {
+      ...state.records[index],
+      ready:true,
+      prepStatus:"complete"
+    };
+    return state.records[index];
+  }
+
   const customerNames = {
     "CUST-001":"鈴木 颯太",
     "CUST-002":"テスト顧客②",
@@ -319,7 +334,10 @@
 
   $("startReception").onclick=()=>show("reception");
   $("startInventory").onclick=()=>show("inventory");
-  $("startHandover").onclick=()=>show("handover");
+  $("startHandover").onclick=()=>{
+    show("handover");
+    if($("hCustomer").value.trim()) loadHandoverCustomer();
+  };
   $("backFromReception").onclick=()=>show("home");
   $("backFromInventory").onclick=()=>show("home");
   $("backFromHandover").onclick=()=>show("home");
@@ -521,6 +539,7 @@
       deliveryMethod:$("rDeliveryMethod").value,
       other:$("rOther").value.trim(),
       ready:false,
+      prepStatus:"pending",
       handedOver:false
     });
 
@@ -555,22 +574,26 @@
       $("inventoryResult").innerHTML='<div class="message danger">この商品タグの預かりデータは見つかりません。</div>';return;
     }
 
-    // 在庫確認＝クリーニング完了後の保管作業。
-    // 商品タグを読み取った時点で「引渡準備完了」にする。
-    rec.ready=true;
+    // 「準備完了」で読み取った衣服そのもののステータスを更新する。
+    const updatedRec=setPrepComplete(cloth);
+    if(!updatedRec){
+      $("inventoryResult").innerHTML='<div class="message danger">ステータスを更新できませんでした。</div>';
+      return;
+    }
+    const current=updatedRec;
 
     $("inventoryResult").innerHTML=`
       <div class="message ok"><strong>✓ 引渡準備が完了しました</strong><br>状態を「引渡準備完了」に変更しました。</div>
       <div class="card" style="margin-top:10px;margin-bottom:0">
-        <div class="summary-row"><span>お客様</span><strong>${esc(rec.customerName)}</strong></div>
-        <div class="summary-row"><span>顧客コード</span><strong>${esc(rec.customer)}</strong></div>
-        <div class="summary-row"><span>衣服</span><strong>${esc(rec.type)}・${esc(rec.color)}</strong></div>
-        <div class="summary-row"><span>クリーニング</span><strong>${esc(rec.methods.join("・"))}</strong></div>
-        <div class="summary-row"><span>引渡予定日</span><strong>${esc(formatDate(rec.dueDate))}</strong></div>
-        <div class="summary-row"><span>引渡方法</span><strong>${esc(rec.deliveryMethod)}</strong></div>
+        <div class="summary-row"><span>お客様</span><strong>${esc(current.customerName)}</strong></div>
+        <div class="summary-row"><span>顧客コード</span><strong>${esc(current.customer)}</strong></div>
+        <div class="summary-row"><span>衣服</span><strong>${esc(current.type)}・${esc(current.color)}</strong></div>
+        <div class="summary-row"><span>クリーニング</span><strong>${esc(current.methods.join("・"))}</strong></div>
+        <div class="summary-row"><span>引渡予定日</span><strong>${esc(formatDate(current.dueDate))}</strong></div>
+        <div class="summary-row"><span>引渡方法</span><strong>${esc(current.deliveryMethod)}</strong></div>
         <div class="summary-row"><span>引渡準備</span><strong><span class="ready-badge done">完了</span></strong></div>
-        <div class="summary-row"><span>引渡</span><strong><span class="ready-badge ${rec.handedOver ? "done" : "pending"}">${rec.handedOver ? "完了" : "未完了"}</span></strong></div>
-        <div class="top-note">同じお客様の預かり衣服：${state.records.filter(r=>r.customer===rec.customer).length}点</div>
+        <div class="summary-row"><span>引渡</span><strong><span class="ready-badge ${current.handedOver ? "done" : "pending"}">${current.handedOver ? "完了" : "未完了"}</span></strong></div>
+        <div class="top-note">同じお客様の預かり衣服：${state.records.filter(r=>r.customer===current.customer).length}点</div>
       </div>`;
 
     $("iCloth").value="";
@@ -615,12 +638,12 @@
     $("handoverListWrap").classList.remove("hidden");
     $("handoverCustomerName").textContent=items[0].customerName;
     $("handoverCount").textContent=`${items.length}点`;
-    $("handoverReadyCount").textContent=`${items.filter(r=>r.ready).length}点`;
+    $("handoverReadyCount").textContent=`${items.filter(r=>prepDone(r)).length}点`;
     renderHandoverList(code);
   }
 
   function renderHandoverList(customer){
-    const items=state.records.filter(r=>r.customer===customer);
+    const items=state.records.filter(r=>r.customer===customer && !r.handedOver);
     const list=$("handoverList"); list.innerHTML="";
     items.forEach(item=>{
       const btn=document.createElement("button");
@@ -631,12 +654,12 @@
           <div class="receipt-name">${esc(item.type)}・${esc(item.color)}</div>
           <div class="receipt-meta">${esc(item.methods.join("・"))}<br>予定：${esc(formatDate(item.dueDate))} / ${esc(item.deliveryMethod)} / ${esc(item.other)}</div>
           <div style="margin-top:7px">
-            <span class="ready-badge ${item.ready ? "done" : "pending"}">引渡準備：${item.ready ? "完了" : "未完了"}</span>
+            <span class="ready-badge ${prepDone(item) ? "done" : "pending"}">引渡準備：${prepDone(item) ? "完了" : "未完了"}</span>
             <span class="ready-badge ${item.handedOver ? "done" : "pending"}" style="margin-left:4px">引渡：${item.handedOver ? "完了" : "未完了"}</span>
           </div>
         </div>
-        <div class="status">${item.handedOver ? "引渡済" : (item.ready ? "選択" : "準備中")}</div>`;
-      if(!item.ready || item.handedOver){
+        <div class="status">${item.handedOver ? "引渡済" : (prepDone(item) ? "選択" : "準備中")}</div>`;
+      if(!prepDone(item) || item.handedOver){
         btn.disabled=true;
         btn.style.opacity=".7";
       }else{
@@ -653,7 +676,7 @@
       list.appendChild(btn);
     });
     $("handoverCount").textContent=`${items.length}点`;
-    $("handoverReadyCount").textContent=`${items.filter(r=>r.ready).length}点`;
+    $("handoverReadyCount").textContent=`${items.filter(r=>prepDone(r)).length}点`;
     if(!items.length){
       list.innerHTML='<div class="message ok">✓ このお客様の衣服はすべて引き渡しました。</div>';
       $("scanPanel").classList.add("hidden");
@@ -668,7 +691,7 @@
     if(scanned!==state.selectedCloth){$("hMessage").innerHTML='<div class="message danger">⚠ 選択した衣服と商品タグが一致しません。</div>';return}
     const rec=state.records.find(r=>r.cloth===scanned);
     if(!rec || rec.customer!==customer){$("hMessage").innerHTML='<div class="message danger">⚠ この衣服は別のお客様のものです。</div>';return}
-    if(!rec.ready){$("hMessage").innerHTML='<div class="message danger">⚠ この衣服はまだ「引渡準備未完了」です。先に「準備完了」で商品タグを読み取ってください。</div>';return}
+    if(!prepDone(rec)){$("hMessage").innerHTML='<div class="message danger">⚠ この衣服はまだ「引渡準備：未完了」です。先に「準備完了」で商品タグを読み取ってください。</div>';return}
     if(rec.handedOver){$("hMessage").innerHTML='<div class="message danger">⚠ この衣服はすでに引渡完了です。</div>';return}
     state.matchedHandoverCloth=scanned;
     $("hMessage").innerHTML='<div class="message ok">✓ お客様と衣服の情報が一致しました。</div>';
@@ -710,7 +733,7 @@
       div.innerHTML=`<strong>${esc(r.customerName)}｜${esc(r.type)}・${esc(r.color)}</strong>
       <small>${esc(r.cloth)} / ${esc(r.methods.join("・"))}<br>
       引渡予定：${esc(formatDate(r.dueDate))} / ${esc(r.deliveryMethod)} / ${esc(r.other)}<br>
-      引渡準備：<span class="ready-badge ${r.ready ? "done" : "pending"}">${r.ready ? "完了" : "未完了"}</span><br>
+      引渡準備：<span class="ready-badge ${prepDone(r) ? "done" : "pending"}">${prepDone(r) ? "完了" : "未完了"}</span><br>
       引渡：<span class="ready-badge ${r.handedOver ? "done" : "pending"}">${r.handedOver ? "完了" : "未完了"}</span></small>`;
       box.appendChild(div);
     });
