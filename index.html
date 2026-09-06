@@ -266,6 +266,50 @@
       .record-with-icon{grid-template-columns:48px 1fr}
     }
 
+
+    .choice-grid{
+      display:grid;
+      grid-template-columns:repeat(2,minmax(0,1fr));
+      gap:8px;
+      margin-top:6px;
+    }
+    .choice-grid label{margin:0;cursor:pointer}
+    .choice-grid input{
+      position:absolute;
+      opacity:0;
+      pointer-events:none;
+    }
+    .choice-grid label span{
+      min-height:46px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap:8px;
+      padding:8px 10px;
+      border:1px solid #cfd8e3;
+      border-radius:12px;
+      background:#fff;
+      font-size:14px;
+      font-weight:800;
+      color:#334155;
+      transition:.12s ease;
+    }
+    .choice-grid input:checked + span{
+      border:2px solid #24557a;
+      background:#eef6fb;
+      color:#174766;
+      box-shadow:0 0 0 2px rgba(36,85,122,.08);
+    }
+    .color-choice label span{justify-content:flex-start}
+    .color-choice i{
+      width:19px;height:19px;border-radius:50%;
+      border:1px solid #b9c2cc;display:inline-block;flex:0 0 19px;
+    }
+    @media(min-width:600px){
+      .garment-choice{grid-template-columns:repeat(4,minmax(0,1fr))}
+      .color-choice{grid-template-columns:repeat(5,minmax(0,1fr))}
+    }
+
 </style>
 </head>
 <body>
@@ -350,23 +394,32 @@
 
         <div class="step">
           <div class="step-head"><div class="num">4</div><strong>服の種類</strong></div>
-          <select id="rType">
-            <option value="">選択</option>
-            <option>ワイシャツ</option><option>ズボン</option><option>ジャケット</option>
-            <option>コート</option><option>セーター</option><option>スカート</option>
-            <option>ワンピース</option><option>その他</option>
-          </select>
+          <div id="rType" class="choice-grid garment-choice" role="radiogroup" aria-label="服の種類">
+  <label><input type="radio" name="rTypeChoice" value="ワイシャツ"><span>ワイシャツ</span></label>
+  <label><input type="radio" name="rTypeChoice" value="ズボン"><span>ズボン</span></label>
+  <label><input type="radio" name="rTypeChoice" value="スカート"><span>スカート</span></label>
+  <label><input type="radio" name="rTypeChoice" value="コート"><span>コート</span></label>
+  <label><input type="radio" name="rTypeChoice" value="ジャケット"><span>ジャケット</span></label>
+  <label><input type="radio" name="rTypeChoice" value="セーター"><span>セーター</span></label>
+  <label><input type="radio" name="rTypeChoice" value="ワンピース"><span>ワンピース</span></label>
+  <label><input type="radio" name="rTypeChoice" value="その他"><span>その他</span></label>
+</div>
         </div>
 
         <div class="step">
           <div class="step-head"><div class="num">5</div><strong>色</strong></div>
-          <select id="rColor">
-            <option value="">選択</option>
-            <option>白</option><option>黒</option><option>グレー</option><option>紺</option>
-            <option>青</option><option>水色</option><option>赤</option><option>ピンク</option>
-            <option>緑</option><option>黄</option><option>ベージュ</option><option>茶</option>
-            <option>紫</option><option>その他</option>
-          </select>
+          <div id="rColor" class="choice-grid color-choice" role="radiogroup" aria-label="色">
+  <label><input type="radio" name="rColorChoice" value="白"><span><i style="background:#fff"></i>白</span></label>
+  <label><input type="radio" name="rColorChoice" value="黒"><span><i style="background:#1f2937"></i>黒</span></label>
+  <label><input type="radio" name="rColorChoice" value="紺"><span><i style="background:#314d76"></i>紺</span></label>
+  <label><input type="radio" name="rColorChoice" value="グレー"><span><i style="background:#9ca3af"></i>グレー</span></label>
+  <label><input type="radio" name="rColorChoice" value="ベージュ"><span><i style="background:#cdbb98"></i>ベージュ</span></label>
+  <label><input type="radio" name="rColorChoice" value="ピンク"><span><i style="background:#f3a6bf"></i>ピンク</span></label>
+  <label><input type="radio" name="rColorChoice" value="青"><span><i style="background:#5b8fd1"></i>青</span></label>
+  <label><input type="radio" name="rColorChoice" value="赤"><span><i style="background:#dc5a5a"></i>赤</span></label>
+  <label><input type="radio" name="rColorChoice" value="緑"><span><i style="background:#6fa77a"></i>緑</span></label>
+  <label><input type="radio" name="rColorChoice" value="その他"><span><i style="background:linear-gradient(135deg,#f3a6bf,#5b8fd1,#e6c853)"></i>その他</span></label>
+</div>
         </div>
 
         <div class="step">
@@ -651,6 +704,15 @@
     return String(s ?? "").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]));
   }
 
+  function selectedChoice(name){
+    const el=document.querySelector(`input[name="${name}"]:checked`);
+    return el ? el.value : "";
+  }
+
+  function clearChoice(name){
+    document.querySelectorAll(`input[name="${name}"]`).forEach(el=>el.checked=false);
+  }
+
   function garmentColor(color){
     const c=String(color || "").trim();
     const map=[
@@ -830,8 +892,8 @@
       $("rCustomer").value.trim() &&
       $("rCloth").value.trim() &&
       selectedMethods().length>0 &&
-      $("rType").value &&
-      $("rColor").value &&
+      selectedChoice("rTypeChoice") &&
+      selectedChoice("rColorChoice") &&
       $("rDueDate").value &&
       $("rDeliveryMethod").value &&
       $("rOther").value.trim();
@@ -854,8 +916,8 @@
     $("cCustomer").textContent=`${getCustomerName(customer)}（${customer}）`;
     $("cCloth").textContent=cloth;
     $("cMethods").textContent=methods.join("・");
-    $("cType").textContent=$("rType").value;
-    $("cColor").textContent=$("rColor").value;
+    $("cType").textContent=selectedChoice("rTypeChoice");
+    $("cColor").textContent=selectedChoice("rColorChoice");
     $("cDueDate").textContent=formatDate($("rDueDate").value);
     $("cDeliveryMethod").textContent=$("rDeliveryMethod").value;
     $("cOther").textContent=$("rOther").value.trim();
@@ -876,8 +938,8 @@
       customerName:getCustomerName(customer),
       cloth,
       methods:selectedMethods(),
-      type:$("rType").value,
-      color:$("rColor").value,
+      type:selectedChoice("rTypeChoice"),
+      color:selectedChoice("rColorChoice"),
       dueDate:$("rDueDate").value,
       deliveryMethod:$("rDeliveryMethod").value,
       other:$("rOther").value.trim(),
@@ -894,8 +956,8 @@
     // 顧客情報だけ保持して、次の衣服の入力内容はすべてリセット
     $("rCloth").value="";
     resetMethods();
-    $("rType").value="";
-    $("rColor").value="";
+    clearChoice("rTypeChoice");
+    clearChoice("rColorChoice");
     $("rDueDate").value="";
     $("rDeliveryMethod").value="";
     $("rOther").value="";
@@ -1140,8 +1202,8 @@ th{background:#f3f4f6}
     $("rCustomer").value="";
     $("rCloth").value="";
     resetMethods();
-    $("rType").value="";
-    $("rColor").value="";
+    clearChoice("rTypeChoice");
+    clearChoice("rColorChoice");
     $("rDueDate").value="";
     $("rDeliveryMethod").value="";
     $("rOther").value="";
