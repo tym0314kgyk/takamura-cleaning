@@ -139,7 +139,104 @@
       .home-grid button{min-height:86px}
       .method-grid{grid-template-columns:1fr}
     }
-  </style>
+  
+    /* ===== UI polish ===== */
+    body{
+      background:linear-gradient(180deg,#f7f9fc 0%,#eef3f8 100%);
+    }
+    header{
+      background:rgba(255,255,255,.94);
+      backdrop-filter:blur(10px);
+      border-bottom:1px solid #e5eaf0;
+      box-shadow:0 2px 10px rgba(15,23,42,.04);
+    }
+    .container{max-width:760px}
+    .card{
+      border:1px solid #e5eaf0;
+      box-shadow:0 8px 24px rgba(15,23,42,.06);
+      border-radius:18px;
+    }
+    button{
+      min-height:50px;
+      border-radius:14px;
+      font-weight:800;
+      transition:transform .08s ease,box-shadow .15s ease;
+    }
+    button:active{transform:scale(.985)}
+    input,select,textarea{
+      min-height:48px;
+      border-radius:12px!important;
+      border:1px solid #cfd8e3!important;
+      background:#fff;
+    }
+    .home-intro{
+      margin:4px 2px 16px;
+      color:#667085;
+      font-size:14px;
+      line-height:1.6;
+    }
+    .home-actions{
+      display:grid;
+      gap:12px;
+    }
+    .home-action{
+      width:100%;
+      min-height:88px;
+      display:flex!important;
+      align-items:center;
+      gap:15px;
+      padding:15px 18px!important;
+      text-align:left!important;
+      background:#fff!important;
+      color:#172033!important;
+      border:1px solid #dfe6ee!important;
+      box-shadow:0 5px 16px rgba(15,23,42,.06);
+    }
+    .home-action .action-icon{
+      width:52px;height:52px;flex:0 0 52px;
+      border-radius:15px;
+      display:grid;place-items:center;
+      background:#eef4fa;
+      color:#24557a;
+    }
+    .home-action .action-icon svg{
+      width:27px;height:27px;
+      stroke:currentColor;fill:none;stroke-width:2;
+      stroke-linecap:round;stroke-linejoin:round;
+    }
+    .home-action .action-copy{flex:1}
+    .home-action .action-title{
+      display:block;font-size:18px;font-weight:900;line-height:1.25;
+    }
+    .home-action .action-sub{
+      display:block;margin-top:4px;font-size:12px;font-weight:600;color:#7a8796;
+    }
+    .home-action .action-arrow{
+      font-size:23px;color:#9aa7b5;font-weight:500;
+    }
+    .screen-heading{
+      display:flex;align-items:center;gap:11px;margin-bottom:5px;
+    }
+    .screen-heading .screen-icon{
+      width:40px;height:40px;border-radius:12px;
+      display:grid;place-items:center;background:#eef4fa;color:#24557a;
+    }
+    .screen-heading svg{
+      width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:2;
+      stroke-linecap:round;stroke-linejoin:round;
+    }
+    .screen-heading h2{margin:0}
+    .step-guide{
+      margin:0 0 15px;color:#667085;font-size:13px;
+    }
+    @media(max-width:560px){
+      .container{padding-left:12px;padding-right:12px}
+      .card{border-radius:16px}
+      .home-action{min-height:82px;padding:13px 14px!important}
+      .home-action .action-icon{width:48px;height:48px;flex-basis:48px}
+    }
+
+</style>
 </head>
 <body>
 <div class="wrap">
@@ -150,10 +247,34 @@
 
   <section id="home" class="card">
     <div class="label">業務を選択</div>
-    <div class="home-grid">
-      <button id="startReception" class="btn-primary">受付</button>
-      <button id="startInventory" class="btn-secondary">準備完了</button>
-      <button id="startHandover" class="btn-secondary">引渡</button>
+    <div class="home-grid" style="display:block">
+      <div class="home-intro">行う作業を選択してください。</div>
+<div class="home-actions">
+<button id="startReception" class="home-action">
+        <span class="action-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5h6"/><path d="M9 3h6v4H9z"/><path d="M6 5H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-1"/><path d="M8 12h8M8 16h5"/></svg></span>
+        <span class="action-copy">
+          <span class="action-title">受付</span>
+          <span class="action-sub">お客様・衣服情報を登録</span>
+        </span>
+        <span class="action-arrow">›</span>
+      </button>
+      <button id="startInventory" class="home-action">
+        <span class="action-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16v13H4z"/><path d="M2 4h20v3H2z"/><path d="M9 12l2 2 4-4"/></svg></span>
+        <span class="action-copy">
+          <span class="action-title">準備完了</span>
+          <span class="action-sub">仕上がった衣服を確認</span>
+        </span>
+        <span class="action-arrow">›</span>
+      </button>
+      <button id="startHandover" class="home-action">
+        <span class="action-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h9"/><path d="m10 9 3 3-3 3"/><path d="M14 6h5a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-5"/><path d="M3 7v10"/></svg></span>
+        <span class="action-copy">
+          <span class="action-title">引渡</span>
+          <span class="action-sub">お客様へ衣服をお渡し</span>
+        </span>
+        <span class="action-arrow">›</span>
+      </button>
+</div>
     </div>
     <div class="top-note">スマホのカメラでQRコードを読み取れます。初回はブラウザのカメラ使用を「許可」してください。</div>
   </section>
@@ -163,7 +284,8 @@
     <div class="card">
       <div class="screen-title">
         <button class="btn-ghost" id="backFromReception">←</button>
-        <h2>受付</h2>
+        <div class="screen-heading"><span class="screen-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5h6"/><path d="M9 3h6v4H9z"/><path d="M6 5H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-1"/><path d="M8 12h8M8 16h5"/></svg></span><h2>受付</h2></div>
+    <div class="step-guide">お客様を確認し、衣服の情報を登録します。</div>
       </div>
 
       <div class="step active">
@@ -279,7 +401,8 @@
     <div class="card">
       <div class="screen-title">
         <button class="btn-ghost" id="backFromInventory">←</button>
-        <h2>準備完了</h2>
+        <div class="screen-heading"><span class="screen-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16v13H4z"/><path d="M2 4h20v3H2z"/><path d="M9 12l2 2 4-4"/></svg></span><h2>準備完了</h2></div>
+    <div class="step-guide">仕上がった衣服のタグを読み取り、引渡準備を完了します。</div>
       </div>
       <div class="top-note" style="margin:0 0 12px">クリーニング完了後、商品タグを読み取って持ち主を確認し、お客様ごとにまとめて保管します。読み取り後は「引渡準備：完了」の状態になります。</div>
       <div class="step active">
@@ -311,7 +434,8 @@
     <div class="card">
       <div class="screen-title">
         <button class="btn-ghost" id="backFromHandover">←</button>
-        <h2>引渡</h2>
+        <div class="screen-heading"><span class="screen-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h9"/><path d="m10 9 3 3-3 3"/><path d="M14 6h5a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-5"/><path d="M3 7v10"/></svg></span><h2>引渡</h2></div>
+    <div class="step-guide">お客様と衣服を照合してから引渡を完了します。</div>
       </div>
 
       <div class="step active">
@@ -734,84 +858,191 @@
     return {records, first};
   }
 
-  $("receptionPdfBtn").onclick=async()=>{
-    const built=buildReceptionReceipt();
-    if(!built){
-      $("pdfMessage").innerHTML='<div class="message danger">PDFに出力する受付データがありません。</div>';
+  $("receptionPdfBtn").onclick=()=>{
+    const records=state.receptionSessionCloths
+      .map(id=>state.records.find(r=>r.cloth===id))
+      .filter(Boolean);
+
+    if(!records.length){
+      $("pdfMessage").innerHTML='<div class="message danger">伝票に出力する受付データがありません。</div>';
       return;
     }
 
-    if(!window.html2canvas || !window.jspdf){
-      $("pdfMessage").innerHTML='<div class="message danger">PDF出力機能を読み込めませんでした。通信環境を確認してください。</div>';
+    const first=records[0];
+    const rows=records.map((r,i)=>`
+      <tr>
+        <td>${i+1}</td>
+        <td>${esc(r.type || "-")}</td>
+        <td>${esc(r.color || "-")}</td>
+        <td>${esc((r.methods || []).join("・") || "-")}</td>
+        <td>${esc(r.cloth || "-")}</td>
+        <td>${esc(r.other || "なし")}</td>
+      </tr>
+    `).join("");
+
+    const receiptHtml=`<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>受付伝票</title>
+<style>
+*{box-sizing:border-box}
+body{
+  margin:0;
+  background:#eef2f6;
+  color:#111827;
+  font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Yu Gothic","Meiryo",sans-serif;
+}
+.toolbar{
+  position:sticky;
+  top:0;
+  display:flex;
+  gap:10px;
+  justify-content:center;
+  padding:14px;
+  background:rgba(255,255,255,.96);
+  border-bottom:1px solid #dfe5ec;
+  z-index:10;
+}
+.toolbar button{
+  min-height:46px;
+  border:0;
+  border-radius:12px;
+  padding:0 18px;
+  font-size:15px;
+  font-weight:800;
+  cursor:pointer;
+}
+.printBtn{background:#1f5f8b;color:#fff}
+.closeBtn{background:#e9eef3;color:#263442}
+.paper{
+  width:210mm;
+  min-height:297mm;
+  margin:18px auto;
+  padding:18mm;
+  background:#fff;
+  box-shadow:0 8px 28px rgba(15,23,42,.12);
+}
+h1{
+  text-align:center;
+  font-size:26px;
+  letter-spacing:.08em;
+  margin:0 0 5px;
+}
+.shop{text-align:center;font-size:15px;margin-bottom:24px}
+.meta{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:8px 20px;
+  border-top:2px solid #222;
+  border-bottom:2px solid #222;
+  padding:13px 0;
+  margin-bottom:18px;
+  font-size:14px;
+}
+table{
+  width:100%;
+  border-collapse:collapse;
+  font-size:13px;
+}
+th,td{
+  border:1px solid #777;
+  padding:8px 7px;
+  vertical-align:top;
+}
+th{background:#f3f4f6}
+.note{
+  margin-top:18px;
+  font-size:12px;
+  line-height:1.7;
+}
+.footer{
+  margin-top:30px;
+  border-top:1px solid #aaa;
+  padding-top:10px;
+  text-align:center;
+  font-size:11px;
+}
+@media(max-width:900px){
+  .paper{
+    width:calc(100% - 16px);
+    min-height:auto;
+    margin:8px auto;
+    padding:20px;
+  }
+  .meta{grid-template-columns:1fr}
+  table{font-size:11px}
+  th,td{padding:6px 4px}
+}
+@media print{
+  @page{size:A4;margin:0}
+  body{background:#fff}
+  .toolbar{display:none!important}
+  .paper{
+    width:210mm;
+    min-height:297mm;
+    margin:0;
+    padding:18mm;
+    box-shadow:none;
+  }
+}
+</style>
+</head>
+<body>
+<div class="toolbar">
+  <button class="printBtn" onclick="window.print()">PDFとして保存・印刷</button>
+  <button class="closeBtn" onclick="window.close()">閉じる</button>
+</div>
+
+<div class="paper">
+  <h1>お預かり伝票</h1>
+  <div class="shop">高村クリーニング店</div>
+
+  <div class="meta">
+    <div>お客様：<strong>${esc(first.customerName || "-")}</strong></div>
+    <div>顧客コード：<strong>${esc(first.customer || "-")}</strong></div>
+    <div>受付日：<strong>${todayJa()}</strong></div>
+    <div>引渡予定日：<strong>${formatDate(first.dueDate)}</strong></div>
+    <div>引渡方法：<strong>${esc(first.deliveryMethod || "-")}</strong></div>
+    <div>お預かり点数：<strong>${records.length}点</strong></div>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>No.</th>
+        <th>服の種類</th>
+        <th>色</th>
+        <th>クリーニング方法</th>
+        <th>商品タグ</th>
+        <th>その他</th>
+      </tr>
+    </thead>
+    <tbody>${rows}</tbody>
+  </table>
+
+  <div class="note">
+    <strong>ご確認ください</strong><br>
+    ・お預かり内容に誤りがないかご確認ください。<br>
+    ・引渡予定日は作業状況等により変更となる場合があります。<br>
+    ・この伝票はお引渡しまで保管してください。
+  </div>
+
+  <div class="footer">高村クリーニング店　受付伝票</div>
+</div>
+</body>
+</html>`;
+
+    const win=window.open("","_blank");
+    if(!win){
+      $("pdfMessage").innerHTML='<div class="message danger">新しいページを開けませんでした。ブラウザのポップアップ許可をご確認ください。</div>';
       return;
     }
-
-    const btn=$("receptionPdfBtn");
-    btn.disabled=true;
-    btn.textContent="PDF作成中…";
-    $("pdfMessage").innerHTML="";
-
-    try{
-      const area=$("receiptPdfArea");
-      const canvas=await html2canvas(area,{
-        scale:2,
-        backgroundColor:"#ffffff",
-        useCORS:true
-      });
-
-      const imgData=canvas.toDataURL("image/jpeg",0.95);
-      const {jsPDF}=window.jspdf;
-      const pdf=new jsPDF({orientation:"portrait",unit:"mm",format:"a4"});
-
-      const pageW=210;
-      const pageH=297;
-      const margin=8;
-      const usableW=pageW-margin*2;
-      const imgH=canvas.height*usableW/canvas.width;
-
-      if(imgH<=pageH-margin*2){
-        pdf.addImage(imgData,"JPEG",margin,margin,usableW,imgH);
-      }else{
-        // 長い伝票は自動で複数ページに分割
-        const pxPerMm=canvas.width/usableW;
-        const pagePxH=(pageH-margin*2)*pxPerMm;
-        let y=0;
-        let page=0;
-
-        while(y<canvas.height){
-          const sliceH=Math.min(pagePxH,canvas.height-y);
-          const part=document.createElement("canvas");
-          part.width=canvas.width;
-          part.height=sliceH;
-          part.getContext("2d").drawImage(
-            canvas,
-            0,y,canvas.width,sliceH,
-            0,0,canvas.width,sliceH
-          );
-          const partData=part.toDataURL("image/jpeg",0.95);
-          if(page>0) pdf.addPage();
-          const partHmm=sliceH/pxPerMm;
-          pdf.addImage(partData,"JPEG",margin,margin,usableW,partHmm);
-          y+=sliceH;
-          page++;
-        }
-      }
-
-      const stamp=new Date();
-      const y=stamp.getFullYear();
-      const m=String(stamp.getMonth()+1).padStart(2,"0");
-      const d=String(stamp.getDate()).padStart(2,"0");
-      const filename=`受付伝票_${safeFileName(built.first.customerName)}_${y}${m}${d}.pdf`;
-
-      pdf.save(filename);
-      $("pdfMessage").innerHTML='<div class="message ok">✓ 受付伝票PDFを出力しました。</div>';
-    }catch(e){
-      console.error(e);
-      $("pdfMessage").innerHTML='<div class="message danger">PDFの作成に失敗しました。もう一度お試しください。</div>';
-    }finally{
-      btn.disabled=false;
-      btn.textContent="受付伝票PDFを出力";
-    }
+    win.document.open();
+    win.document.write(receiptHtml);
+    win.document.close();
+    $("pdfMessage").innerHTML='<div class="message ok">✓ 新しいページに受付伝票を開きました。</div>';
   };
 
   $("finishReception").onclick=()=>{
