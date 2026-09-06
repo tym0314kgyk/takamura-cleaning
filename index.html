@@ -342,6 +342,37 @@
       .same-date-chip{width:100%}
     }
 
+
+    .delivery-choice{grid-template-columns:repeat(2,minmax(0,1fr))}
+    .special-notes-wrap{margin-top:6px}
+    .special-note-choice{grid-template-columns:repeat(2,minmax(0,1fr))}
+    .special-note-choice label span{
+      justify-content:flex-start;
+      min-height:44px;
+      padding-left:12px;
+    }
+    .special-note-choice input:checked + span{
+      border:2px solid #24557a;
+      background:#eef6fb;
+      color:#174766;
+    }
+    .free-note-label{
+      display:block;
+      margin:12px 0 6px;
+      font-size:13px;
+      font-weight:900;
+      color:#475569;
+    }
+    #rOtherText{
+      width:100%;
+      box-sizing:border-box;
+      resize:vertical;
+      min-height:78px;
+    }
+    @media(min-width:700px){
+      .special-note-choice{grid-template-columns:repeat(4,minmax(0,1fr))}
+    }
+
 </style>
 </head>
 <body>
@@ -476,16 +507,28 @@
 
         <div class="step">
           <div class="step-head"><div class="num">7</div><strong>引渡方法</strong></div>
-          <select id="rDeliveryMethod">
-            <option value="">選択</option>
-            <option>手渡し</option>
-            <option>配送</option>
-          </select>
+          <div id="rDeliveryMethod" class="choice-grid delivery-choice" role="radiogroup" aria-label="受取方法">
+  <label><input type="radio" name="rDeliveryChoice" value="店舗受け取り"><span>店舗受け取り</span></label>
+  <label><input type="radio" name="rDeliveryChoice" value="配送受け取り"><span>配送受け取り</span></label>
+</div>
         </div>
 
         <div class="step">
           <div class="step-head"><div class="num">8</div><strong>その他事項</strong></div>
-          <input id="rOther" placeholder="例：シミあり、ボタン注意（なければ「なし」）" />
+          <div class="special-notes-wrap">
+  <div id="rSpecialNotes" class="choice-grid special-note-choice" aria-label="注意事項・特記事項">
+    <label><input type="checkbox" name="rSpecialNoteChoice" value="特になし" data-none="true"><span>特になし</span></label>
+    <label><input type="checkbox" name="rSpecialNoteChoice" value="ボタン注意"><span>ボタン注意</span></label>
+    <label><input type="checkbox" name="rSpecialNoteChoice" value="シミあり"><span>シミあり</span></label>
+    <label><input type="checkbox" name="rSpecialNoteChoice" value="ほつれあり"><span>ほつれあり</span></label>
+    <label><input type="checkbox" name="rSpecialNoteChoice" value="破れあり"><span>破れあり</span></label>
+    <label><input type="checkbox" name="rSpecialNoteChoice" value="装飾品あり"><span>装飾品あり</span></label>
+    <label><input type="checkbox" name="rSpecialNoteChoice" value="色落ち注意"><span>色落ち注意</span></label>
+    <label><input type="checkbox" name="rSpecialNoteChoice" value="縮み注意"><span>縮み注意</span></label>
+  </div>
+  <label class="free-note-label" for="rOtherText">その他の内容を入力（任意）</label>
+  <textarea id="rOtherText" rows="3" placeholder="例：襟元のシミを重点的に、装飾部分は弱めに処理 など"></textarea>
+</div>
         </div>
       </div>
 
@@ -751,6 +794,21 @@
     return String(s ?? "").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]));
   }
 
+  function selectedSpecialNotes(){
+    const vals=[...document.querySelectorAll('input[name="rSpecialNoteChoice"]:checked')].map(el=>el.value);
+    const free=String($("rOtherText")?.value || "").trim();
+    if(vals.includes("特になし") && vals.length===1 && !free) return "特になし";
+    const filtered=vals.filter(v=>v!=="特になし");
+    if(free) filtered.push(free);
+    return filtered.join("・") || "特になし";
+  }
+
+  function clearSpecialNotes(){
+    document.querySelectorAll('input[name="rSpecialNoteChoice"]').forEach(el=>el.checked=false);
+    const free=$("rOtherText");
+    if(free) free.value="";
+  }
+
   function selectedChoice(name){
     const el=document.querySelector(`input[name="${name}"]:checked`);
     return el ? el.value : "";
@@ -1014,20 +1072,35 @@
       selectedChoice("rTypeChoice") &&
       selectedChoice("rColorChoice") &&
       $("rDueDate").value &&
-      $("rDeliveryMethod").value &&
-      $("rOther").value.trim();
+      selectedChoice("rDeliveryChoice") &&
+      selectedSpecialNotes().trim();
     $("saveReception").disabled=!ready;
 
     renderCustomerDueDates();
   }
 
-  ["rCloth","rDueDate","rDeliveryMethod","rOther"].forEach(id=>{
+  ["rCloth","rDueDate","rOtherText"].forEach(id=>{
     $(id).addEventListener("input",updateReceptionButton);
     $(id).addEventListener("change",updateReceptionButton);
   });
-  document.querySelectorAll('input[name="rTypeChoice"],input[name="rColorChoice"]').forEach(x=>x.addEventListener("change",updateReceptionButton));
+  document.querySelectorAll('input[name="rTypeChoice"],input[name="rColorChoice"],input[name="rDeliveryChoice"],input[name="rSpecialNoteChoice"]').forEach(x=>x.addEventListener("change",updateReceptionButton));
   document.querySelectorAll('#methodChoices input').forEach(x=>x.addEventListener("change",updateReceptionButton));
 
+
+  // 注意事項：「特になし」と他項目は同時選択しない
+  document.querySelectorAll('input[name="rSpecialNoteChoice"]').forEach(cb=>{
+    cb.addEventListener("change",()=>{
+      const none=document.querySelector('input[name="rSpecialNoteChoice"][data-none="true"]');
+      if(cb.dataset.none==="true" && cb.checked){
+        document.querySelectorAll('input[name="rSpecialNoteChoice"]').forEach(x=>{
+          if(x!==cb) x.checked=false;
+        });
+      }else if(cb.checked && none){
+        none.checked=false;
+      }
+      updateReceptionButton();
+    });
+  });
 
   // 引渡予定日のショートカット
   document.querySelectorAll(".date-chip").forEach(btn=>{
@@ -1060,8 +1133,8 @@
     $("cType").textContent=selectedChoice("rTypeChoice");
     $("cColor").textContent=selectedChoice("rColorChoice");
     $("cDueDate").textContent=formatDate($("rDueDate").value);
-    $("cDeliveryMethod").textContent=$("rDeliveryMethod").value;
-    $("cOther").textContent=$("rOther").value.trim();
+    $("cDeliveryMethod").textContent=selectedChoice("rDeliveryChoice");
+    $("cOther").textContent=selectedSpecialNotes().trim();
     $("rMessage").innerHTML="";
     show("receptionConfirm");
   };
@@ -1082,8 +1155,8 @@
       type:selectedChoice("rTypeChoice"),
       color:selectedChoice("rColorChoice"),
       dueDate:$("rDueDate").value,
-      deliveryMethod:$("rDeliveryMethod").value,
-      other:$("rOther").value.trim(),
+      deliveryMethod:selectedChoice("rDeliveryChoice"),
+      other:selectedSpecialNotes().trim(),
       ready:false,
       prepStatus:"pending",
       handedOver:false
@@ -1100,8 +1173,8 @@
     clearChoice("rTypeChoice");
     clearChoice("rColorChoice");
     $("rDueDate").value="";
-    $("rDeliveryMethod").value="";
-    $("rOther").value="";
+    clearChoice("rDeliveryChoice");
+    clearSpecialNotes();
   
 
     renderRecords();
@@ -1348,8 +1421,8 @@ th{background:#f3f4f6}
     clearChoice("rTypeChoice");
     clearChoice("rColorChoice");
     $("rDueDate").value="";
-    $("rDeliveryMethod").value="";
-    $("rOther").value="";
+    clearChoice("rDeliveryChoice");
+    clearSpecialNotes();
 
     $("rMessage").innerHTML="";
     $("pdfMessage").innerHTML="";
