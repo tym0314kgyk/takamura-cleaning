@@ -419,6 +419,12 @@
     return record && (record.prepStatus==="complete" || record.ready===true);
   }
 
+  // 同じ商品タグが「現在お預かり中」の衣服に使われているかだけを判定。
+  // 引渡完了済みの履歴はタグ再利用を妨げない。
+  function isClothCurrentlyDeposited(clothId){
+    return state.records.some(r=>r.cloth===clothId && r.handedOver!==true);
+  }
+
   function setPrepComplete(clothId){
     const index=state.records.findIndex(r=>r.cloth===clothId);
     if(index<0) return null;
@@ -442,7 +448,9 @@
     selectedCloth:null,
     matchedHandoverCloth:null,
     scanTarget:null,
-    qr:null
+    qr:null,
+    pendingReadyCloth:null,
+    receptionSessionCloths:[]
   };
 
   function show(id){
@@ -629,8 +637,8 @@
     const customer=$("rCustomer").value.trim();
     const cloth=$("rCloth").value.trim();
     const methods=selectedMethods();
-    if(state.records.some(r=>r.cloth===cloth)){
-      $("rMessage").innerHTML='<div class="message danger">この衣類QRはすでに預かり中です。</div>';return;
+    if(isClothCurrentlyDeposited(cloth)){
+      $("rMessage").innerHTML='<div class="message danger">この商品タグは現在お預かり中の衣服に使用されています。</div>';return;
     }
     $("cCustomer").textContent=`${getCustomerName(customer)}（${customer}）`;
     $("cCloth").textContent=cloth;
@@ -650,7 +658,7 @@
   $("confirmReception").onclick=()=>{
     const customer=$("rCustomer").value.trim();
     const cloth=$("rCloth").value.trim();
-    if(state.records.some(r=>r.cloth===cloth)){ show("reception"); $("rMessage").innerHTML='<div class="message danger">この衣類QRはすでに預かり中です。</div>'; return; }
+    if(isClothCurrentlyDeposited(cloth)){ show("reception"); $("rMessage").innerHTML='<div class="message danger">この商品タグは現在お預かり中の衣服に使用されています。</div>'; return; }
 
     state.records.push({
       customer,
@@ -672,13 +680,14 @@
     $("receptionPdfBtn").classList.remove("hidden");
     $("pdfMessage").innerHTML="";
 
-    // 顧客は保持して、同じ人の次の衣服を連続受付
+    // 顧客情報だけ保持して、次の衣服の入力内容はすべてリセット
     $("rCloth").value="";
     resetMethods();
     $("rType").value="";
     $("rColor").value="";
+    $("rDueDate").value="";
+    $("rDeliveryMethod").value="";
     $("rOther").value="";
-    // 予定日・引渡方法は同一顧客で同じ可能性が高いので保持
     renderRecords();
     show("reception");
     showReceptionCustomerInfo();
