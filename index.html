@@ -5,6 +5,8 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <title>高村クリーニング店 管理アプリ</title>
   <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
   <style>
     :root{
       --bg:#f5f7fb;--card:#fff;--text:#1f2937;--sub:#6b7280;
@@ -58,6 +60,68 @@
     .ready-badge.done{background:#eaf8ef;color:#166534}
     .ready-badge.pending{background:#fff3cd;color:#854d0e}
     .record{border-top:1px solid var(--line);padding:10px 0}
+
+    /* PDF伝票用：画面外にA4相当で描画してPDF化 */
+    #receiptPdfArea{
+      position:fixed;
+      left:-10000px;
+      top:0;
+      width:794px;
+      min-height:1123px;
+      background:#fff;
+      color:#111;
+      padding:54px;
+      box-sizing:border-box;
+      font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Yu Gothic","Meiryo",sans-serif;
+    }
+    #receiptPdfArea .receipt-pdf-title{
+      text-align:center;
+      font-size:28px;
+      font-weight:900;
+      letter-spacing:.08em;
+      margin-bottom:8px;
+    }
+    #receiptPdfArea .receipt-pdf-shop{
+      text-align:center;
+      font-size:16px;
+      margin-bottom:28px;
+    }
+    #receiptPdfArea .receipt-pdf-meta{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:8px 24px;
+      border-top:2px solid #222;
+      border-bottom:2px solid #222;
+      padding:14px 0;
+      margin-bottom:20px;
+      font-size:15px;
+    }
+    #receiptPdfArea table{
+      width:100%;
+      border-collapse:collapse;
+      font-size:14px;
+    }
+    #receiptPdfArea th,#receiptPdfArea td{
+      border:1px solid #777;
+      padding:9px 8px;
+      vertical-align:top;
+    }
+    #receiptPdfArea th{
+      background:#f3f3f3;
+      font-weight:800;
+    }
+    #receiptPdfArea .receipt-pdf-note{
+      margin-top:20px;
+      font-size:13px;
+      line-height:1.7;
+    }
+    #receiptPdfArea .receipt-pdf-footer{
+      margin-top:34px;
+      padding-top:12px;
+      border-top:1px solid #999;
+      font-size:12px;
+      text-align:center;
+    }
     .record:first-child{border-top:0}
     .record small{display:block;color:var(--sub);margin-top:4px;line-height:1.5}
     .search-results{display:grid;gap:8px;margin-top:9px}
@@ -178,6 +242,10 @@
         <button id="finishReception" class="btn-secondary">受付終了</button>
       </div>
       <div id="rMessage"></div>
+      <button id="receptionPdfBtn" class="btn-primary hidden" style="width:100%;margin-top:10px">
+        受付伝票PDFを出力
+      </button>
+      <div id="pdfMessage"></div>
     </div>
   </section>
 
@@ -302,6 +370,46 @@
     <button id="closeScanner" class="btn-secondary" style="width:100%;margin-top:12px">閉じる</button>
   </div>
 </div>
+
+  <!-- 受付伝票PDF描画領域 -->
+  <div id="receiptPdfArea" aria-hidden="true">
+    <div class="receipt-pdf-title">お預かり伝票</div>
+    <div class="receipt-pdf-shop">高村クリーニング店</div>
+
+    <div class="receipt-pdf-meta">
+      <div>お客様：<strong id="pdfCustomerName">-</strong></div>
+      <div>顧客コード：<strong id="pdfCustomerCode">-</strong></div>
+      <div>受付日：<strong id="pdfReceptionDate">-</strong></div>
+      <div>引渡予定日：<strong id="pdfDueDate">-</strong></div>
+      <div>引渡方法：<strong id="pdfDeliveryMethod">-</strong></div>
+      <div>お預かり点数：<strong id="pdfItemCount">0点</strong></div>
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th style="width:7%">No.</th>
+          <th style="width:16%">服の種類</th>
+          <th style="width:12%">色</th>
+          <th style="width:25%">洗濯方法</th>
+          <th style="width:18%">商品タグ</th>
+          <th>その他</th>
+        </tr>
+      </thead>
+      <tbody id="pdfItems"></tbody>
+    </table>
+
+    <div class="receipt-pdf-note">
+      <strong>ご確認ください</strong><br>
+      ・お預かり内容に誤りがないかご確認ください。<br>
+      ・引渡予定日は作業状況等により変更となる場合があります。<br>
+      ・この伝票はお引渡しまで保管してください。
+    </div>
+
+    <div class="receipt-pdf-footer">
+      高村クリーニング店　受付伝票
+    </div>
+  </div>
 
 <script>
 (() => {
@@ -559,6 +667,11 @@
       handedOver:false
     });
 
+    // 今回の受付セッションで受け取った衣服を伝票用に保持
+    state.receptionSessionCloths.push(cloth);
+    $("receptionPdfBtn").classList.remove("hidden");
+    $("pdfMessage").innerHTML="";
+
     // 顧客は保持して、同じ人の次の衣服を連続受付
     $("rCloth").value="";
     resetMethods();
@@ -573,11 +686,133 @@
     $("rMessage").innerHTML='<div class="message ok">✓ 1点の受取が完了しました。同じお客様の次の衣服を続けて受付できます。</div>';
   };
 
+
+  function todayJa(){
+    const d=new Date();
+    return `${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日`;
+  }
+
+  function safeFileName(s){
+    return String(s || "顧客").replace(/[\\/:*?"<>|]/g,"_");
+  }
+
+  function buildReceptionReceipt(){
+    const records=state.receptionSessionCloths
+      .map(id=>state.records.find(r=>r.cloth===id))
+      .filter(Boolean);
+
+    if(!records.length) return null;
+
+    const first=records[0];
+    $("pdfCustomerName").textContent=first.customerName || "-";
+    $("pdfCustomerCode").textContent=first.customer || "-";
+    $("pdfReceptionDate").textContent=todayJa();
+    $("pdfDueDate").textContent=formatDate(first.dueDate);
+    $("pdfDeliveryMethod").textContent=first.deliveryMethod || "-";
+    $("pdfItemCount").textContent=`${records.length}点`;
+
+    $("pdfItems").innerHTML=records.map((r,i)=>`
+      <tr>
+        <td>${i+1}</td>
+        <td>${esc(r.type)}</td>
+        <td>${esc(r.color)}</td>
+        <td>${esc(r.methods.join("・"))}</td>
+        <td>${esc(r.cloth)}</td>
+        <td>${esc(r.other || "なし")}</td>
+      </tr>
+    `).join("");
+
+    return {records, first};
+  }
+
+  $("receptionPdfBtn").onclick=async()=>{
+    const built=buildReceptionReceipt();
+    if(!built){
+      $("pdfMessage").innerHTML='<div class="message danger">PDFに出力する受付データがありません。</div>';
+      return;
+    }
+
+    if(!window.html2canvas || !window.jspdf){
+      $("pdfMessage").innerHTML='<div class="message danger">PDF出力機能を読み込めませんでした。通信環境を確認してください。</div>';
+      return;
+    }
+
+    const btn=$("receptionPdfBtn");
+    btn.disabled=true;
+    btn.textContent="PDF作成中…";
+    $("pdfMessage").innerHTML="";
+
+    try{
+      const area=$("receiptPdfArea");
+      const canvas=await html2canvas(area,{
+        scale:2,
+        backgroundColor:"#ffffff",
+        useCORS:true
+      });
+
+      const imgData=canvas.toDataURL("image/jpeg",0.95);
+      const {jsPDF}=window.jspdf;
+      const pdf=new jsPDF({orientation:"portrait",unit:"mm",format:"a4"});
+
+      const pageW=210;
+      const pageH=297;
+      const margin=8;
+      const usableW=pageW-margin*2;
+      const imgH=canvas.height*usableW/canvas.width;
+
+      if(imgH<=pageH-margin*2){
+        pdf.addImage(imgData,"JPEG",margin,margin,usableW,imgH);
+      }else{
+        // 長い伝票は自動で複数ページに分割
+        const pxPerMm=canvas.width/usableW;
+        const pagePxH=(pageH-margin*2)*pxPerMm;
+        let y=0;
+        let page=0;
+
+        while(y<canvas.height){
+          const sliceH=Math.min(pagePxH,canvas.height-y);
+          const part=document.createElement("canvas");
+          part.width=canvas.width;
+          part.height=sliceH;
+          part.getContext("2d").drawImage(
+            canvas,
+            0,y,canvas.width,sliceH,
+            0,0,canvas.width,sliceH
+          );
+          const partData=part.toDataURL("image/jpeg",0.95);
+          if(page>0) pdf.addPage();
+          const partHmm=sliceH/pxPerMm;
+          pdf.addImage(partData,"JPEG",margin,margin,usableW,partHmm);
+          y+=sliceH;
+          page++;
+        }
+      }
+
+      const stamp=new Date();
+      const y=stamp.getFullYear();
+      const m=String(stamp.getMonth()+1).padStart(2,"0");
+      const d=String(stamp.getDate()).padStart(2,"0");
+      const filename=`受付伝票_${safeFileName(built.first.customerName)}_${y}${m}${d}.pdf`;
+
+      pdf.save(filename);
+      $("pdfMessage").innerHTML='<div class="message ok">✓ 受付伝票PDFを出力しました。</div>';
+    }catch(e){
+      console.error(e);
+      $("pdfMessage").innerHTML='<div class="message danger">PDFの作成に失敗しました。もう一度お試しください。</div>';
+    }finally{
+      btn.disabled=false;
+      btn.textContent="受付伝票PDFを出力";
+    }
+  };
+
   $("finishReception").onclick=()=>{
     $("rCustomer").value=""; $("rCloth").value=""; resetMethods();
     $("rType").value=""; $("rColor").value=""; $("rDueDate").value="";
     $("rDeliveryMethod").value=""; $("rOther").value="";
-    $("rMessage").innerHTML=""; $("receptionCustomerSearch").innerHTML="";
+    $("rMessage").innerHTML=""; $("pdfMessage").innerHTML="";
+    $("receptionPdfBtn").classList.add("hidden");
+    $("receptionCustomerSearch").innerHTML="";
+    state.receptionSessionCloths=[];
     updateReceptionButton(); show("home");
   };
 
