@@ -310,6 +310,38 @@
       .color-choice{grid-template-columns:repeat(5,minmax(0,1fr))}
     }
 
+
+    .due-date-tools{margin-top:10px}
+    .due-label{font-size:13px;font-weight:900;color:#475569;margin:10px 0 7px}
+    .due-shortcuts{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px}
+    .date-chip,.same-date-chip{
+      appearance:none;border:1px solid #cfd8e3;background:#fff;color:#334155;
+      border-radius:11px;padding:10px 7px;font-weight:800;font-size:13px;cursor:pointer;
+    }
+    .date-chip.active,.same-date-chip.active{
+      border:2px solid #24557a;background:#eef6fb;color:#174766;
+    }
+    .customer-due-wrap{
+      margin-top:12px;padding:10px 11px;border-radius:13px;background:#f8fafc;border:1px solid #e2e8f0;
+    }
+    .customer-due-item{
+      display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;
+      padding:8px 0;border-bottom:1px solid #e5e7eb;
+    }
+    .customer-due-item:last-child{border-bottom:0}
+    .customer-due-main{display:flex;align-items:center;gap:9px;min-width:0}
+    .customer-due-main .garment-icon{width:38px;height:38px;flex-basis:38px;border-radius:10px}
+    .customer-due-main .garment-icon svg{width:27px;height:27px}
+    .customer-due-name{font-size:13px;font-weight:850}
+    .customer-due-date{font-size:12px;color:#64748b;margin-top:2px}
+    .same-date-chip{white-space:nowrap;padding:8px 9px}
+    .calendar-note{font-size:12px;color:#64748b;margin-top:9px}
+    @media(max-width:480px){
+      .due-shortcuts{grid-template-columns:repeat(2,minmax(0,1fr))}
+      .customer-due-item{grid-template-columns:1fr}
+      .same-date-chip{width:100%}
+    }
+
 </style>
 </head>
 <body>
@@ -425,6 +457,21 @@
         <div class="step">
           <div class="step-head"><div class="num">6</div><strong>引渡予定日</strong></div>
           <input id="rDueDate" type="date" />
+<div class="due-date-tools">
+  <div class="due-label">よく使う日付</div>
+  <div class="due-shortcuts">
+    <button type="button" class="date-chip" data-days="1">明日</button>
+    <button type="button" class="date-chip" data-days="2">2日後</button>
+    <button type="button" class="date-chip" data-days="3">3日後</button>
+    <button type="button" class="date-chip" data-days="7">1週間後</button>
+  </div>
+  <div id="customerDueWrap" class="customer-due-wrap" style="display:none">
+    <div class="due-label" id="customerDueTitle">このお客様の予定</div>
+    <div id="customerDueList"></div>
+  </div>
+  <div class="calendar-note">📅 その他の日付はカレンダーから選択できます</div>
+</div>
+
         </div>
 
         <div class="step">
@@ -713,6 +760,73 @@
     document.querySelectorAll(`input[name="${name}"]`).forEach(el=>el.checked=false);
   }
 
+  function localDateString(date){
+    const y=date.getFullYear();
+    const m=String(date.getMonth()+1).padStart(2,"0");
+    const d=String(date.getDate()).padStart(2,"0");
+    return `${y}-${m}-${d}`;
+  }
+
+  function chooseDueDate(dateStr, sourceButton){
+    $("rDueDate").value=dateStr;
+    document.querySelectorAll(".date-chip,.same-date-chip").forEach(b=>b.classList.remove("active"));
+    if(sourceButton) sourceButton.classList.add("active");
+    $("rDueDate").dispatchEvent(new Event("input",{bubbles:true}));
+    $("rDueDate").dispatchEvent(new Event("change",{bubbles:true}));
+  }
+
+  function currentReceptionCustomerCode(){
+    if(state && state.reception && state.reception.customerCode) return state.reception.customerCode;
+    const codeEl=$("rCustomerCode");
+    return codeEl ? String(codeEl.value||"").trim() : "";
+  }
+
+  function renderCustomerDueDates(){
+    const wrap=$("customerDueWrap");
+    const list=$("customerDueList");
+    const title=$("customerDueTitle");
+    if(!wrap || !list) return;
+
+    const code=currentReceptionCustomerCode();
+    const name=(state && state.reception && state.reception.customerName) ? state.reception.customerName : "";
+    const rows=state.records
+      .filter(r=>r.customerCode===code && r.handedOver!==true && r.dueDate)
+      .sort((a,b)=>String(a.dueDate).localeCompare(String(b.dueDate)));
+
+    if(!code || !rows.length){
+      wrap.style.display="none";
+      list.innerHTML="";
+      return;
+    }
+
+    title.textContent=(name ? name+"さん" : "このお客様")+"の予定";
+    const grouped={};
+    rows.forEach(r=>{
+      if(!grouped[r.dueDate]) grouped[r.dueDate]=[];
+      grouped[r.dueDate].push(r);
+    });
+
+    list.innerHTML=Object.entries(grouped).map(([date,items])=>{
+      const first=items[0];
+      const garments=items.map(x=>`${esc(x.type||"衣服")}（${esc(x.color||"色未設定")}）`).join("・");
+      return `<div class="customer-due-item">
+        <div class="customer-due-main">
+          ${garmentIconSvg(first.type,first.color)}
+          <div>
+            <div class="customer-due-name">${garments}</div>
+            <div class="customer-due-date">${esc(formatDate(date))} 引渡予定${items.length>1 ? `・${items.length}点` : ""}</div>
+          </div>
+        </div>
+        <button type="button" class="same-date-chip" data-date="${esc(date)}">${esc(formatDate(date))}に合わせる</button>
+      </div>`;
+    }).join("");
+
+    list.querySelectorAll(".same-date-chip").forEach(btn=>{
+      btn.addEventListener("click",()=>chooseDueDate(btn.dataset.date,btn));
+    });
+    wrap.style.display="";
+  }
+
   function garmentColor(color){
     const c=String(color || "").trim();
     const map=[
@@ -898,6 +1012,8 @@
       $("rDeliveryMethod").value &&
       $("rOther").value.trim();
     $("saveReception").disabled=!ready;
+
+    renderCustomerDueDates();
   }
 
   ["rCloth","rType","rColor","rDueDate","rDeliveryMethod","rOther"].forEach(id=>{
@@ -961,6 +1077,24 @@
     $("rDueDate").value="";
     $("rDeliveryMethod").value="";
     $("rOther").value="";
+  
+  document.querySelectorAll(".date-chip").forEach(btn=>{
+    btn.addEventListener("click",()=>{
+      const d=new Date();
+      d.setHours(12,0,0,0);
+      d.setDate(d.getDate()+Number(btn.dataset.days));
+      chooseDueDate(localDateString(d),btn);
+    });
+  });
+
+  $("rDueDate").addEventListener("change",()=>{
+    document.querySelectorAll(".date-chip,.same-date-chip").forEach(b=>b.classList.remove("active"));
+    document.querySelectorAll(".same-date-chip").forEach(b=>{
+      if(b.dataset.date===$("rDueDate").value) b.classList.add("active");
+    });
+  });
+
+  renderCustomerDueDates();
     renderRecords();
     show("reception");
     showReceptionCustomerInfo();
