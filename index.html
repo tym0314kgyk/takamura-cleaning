@@ -776,9 +776,8 @@
   }
 
   function currentReceptionCustomerCode(){
-    if(state && state.reception && state.reception.customerCode) return state.reception.customerCode;
-    const codeEl=$("rCustomerCode");
-    return codeEl ? String(codeEl.value||"").trim() : "";
+    const el=$("rCustomer");
+    return el ? String(el.value||"").trim() : "";
   }
 
   function renderCustomerDueDates(){
@@ -788,14 +787,20 @@
     if(!wrap || !list) return;
 
     const code=currentReceptionCustomerCode();
-    const name=(state && state.reception && state.reception.customerName) ? state.reception.customerName : "";
+    const name=code ? getCustomerName(code) : "";
     const rows=state.records
-      .filter(r=>r.customerCode===code && r.handedOver!==true && r.dueDate)
+      .filter(r=>r.customer===code && r.handedOver!==true && r.dueDate)
       .sort((a,b)=>String(a.dueDate).localeCompare(String(b.dueDate)));
 
-    if(!code || !rows.length){
+    if(!code){
       wrap.style.display="none";
       list.innerHTML="";
+      return;
+    }
+    if(!rows.length){
+      title.textContent=(name ? name+"さん" : "このお客様")+"の予定";
+      list.innerHTML='<div class="calendar-note" style="margin:0">現在、ほかにお預かり中の衣服はありません。</div>';
+      wrap.style.display="";
       return;
     }
 
@@ -1016,11 +1021,31 @@
     renderCustomerDueDates();
   }
 
-  ["rCloth","rType","rColor","rDueDate","rDeliveryMethod","rOther"].forEach(id=>{
+  ["rCloth","rDueDate","rDeliveryMethod","rOther"].forEach(id=>{
     $(id).addEventListener("input",updateReceptionButton);
     $(id).addEventListener("change",updateReceptionButton);
   });
+  document.querySelectorAll('input[name="rTypeChoice"],input[name="rColorChoice"]').forEach(x=>x.addEventListener("change",updateReceptionButton));
   document.querySelectorAll('#methodChoices input').forEach(x=>x.addEventListener("change",updateReceptionButton));
+
+
+  // 引渡予定日のショートカット
+  document.querySelectorAll(".date-chip").forEach(btn=>{
+    btn.addEventListener("click",()=>{
+      const d=new Date();
+      d.setHours(12,0,0,0);
+      d.setDate(d.getDate()+Number(btn.dataset.days));
+      chooseDueDate(localDateString(d),btn);
+    });
+  });
+
+  // カレンダーで直接日付を選んだ場合の表示同期
+  $("rDueDate").addEventListener("change",()=>{
+    document.querySelectorAll(".date-chip,.same-date-chip").forEach(b=>b.classList.remove("active"));
+    document.querySelectorAll(".same-date-chip").forEach(b=>{
+      if(b.dataset.date===$("rDueDate").value) b.classList.add("active");
+    });
+  });
 
   $("saveReception").onclick=()=>{
     const customer=$("rCustomer").value.trim();
@@ -1078,23 +1103,7 @@
     $("rDeliveryMethod").value="";
     $("rOther").value="";
   
-  document.querySelectorAll(".date-chip").forEach(btn=>{
-    btn.addEventListener("click",()=>{
-      const d=new Date();
-      d.setHours(12,0,0,0);
-      d.setDate(d.getDate()+Number(btn.dataset.days));
-      chooseDueDate(localDateString(d),btn);
-    });
-  });
 
-  $("rDueDate").addEventListener("change",()=>{
-    document.querySelectorAll(".date-chip,.same-date-chip").forEach(b=>b.classList.remove("active"));
-    document.querySelectorAll(".same-date-chip").forEach(b=>{
-      if(b.dataset.date===$("rDueDate").value) b.classList.add("active");
-    });
-  });
-
-  renderCustomerDueDates();
     renderRecords();
     show("reception");
     showReceptionCustomerInfo();
