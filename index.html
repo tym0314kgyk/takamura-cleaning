@@ -1046,14 +1046,26 @@ th{background:#f3f4f6}
   };
 
   $("finishReception").onclick=()=>{
-    $("rCustomer").value=""; $("rCloth").value=""; resetMethods();
-    $("rType").value=""; $("rColor").value=""; $("rDueDate").value="";
-    $("rDeliveryMethod").value=""; $("rOther").value="";
-    $("rMessage").innerHTML=""; $("pdfMessage").innerHTML="";
+    // 受付セッション終了時は顧客情報も含めて完全にリセット
+    state.currentReceptionCustomer=null;
+    state.receptionSessionCloths=[];
+
+    $("rCustomer").value="";
+    $("rCloth").value="";
+    resetMethods();
+    $("rType").value="";
+    $("rColor").value="";
+    $("rDueDate").value="";
+    $("rDeliveryMethod").value="";
+    $("rOther").value="";
+
+    $("rMessage").innerHTML="";
+    $("pdfMessage").innerHTML="";
     $("receptionPdfBtn").classList.add("hidden");
     $("receptionCustomerSearch").innerHTML="";
-    state.receptionSessionCloths=[];
-    updateReceptionButton(); show("home");
+
+    updateReceptionButton();
+    show("home");
   };
 
   /* 準備完了 */
