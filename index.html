@@ -236,6 +236,36 @@
       .home-action .action-icon{width:48px;height:48px;flex-basis:48px}
     }
 
+
+    .btn-secondary-action{
+      background:#fff!important;
+      color:#334155!important;
+      border:1px solid #cbd5e1!important;
+      box-shadow:none!important;
+    }
+    .btn-secondary-action:hover{
+      background:#f8fafc!important;
+    }
+
+
+    .garment-icon{
+      width:48px;height:48px;border-radius:13px;display:grid;place-items:center;
+      background:#f8fafc;border:1px solid #e2e8f0;flex:0 0 48px;
+    }
+    .garment-icon svg{width:34px;height:34px;overflow:visible}
+    .garment-summary{
+      display:flex;align-items:center;gap:12px;margin:10px 0 14px;padding:10px 12px;
+      border:1px solid #e2e8f0;border-radius:14px;background:#fbfdff;
+    }
+    .garment-summary-title{font-weight:900;font-size:16px}
+    .garment-summary-sub{color:#667085;font-size:12px;margin-top:2px}
+    .record-with-icon{display:grid;grid-template-columns:52px 1fr;gap:10px;align-items:start}
+    @media(max-width:560px){
+      .garment-icon{width:44px;height:44px;flex-basis:44px}
+      .garment-icon svg{width:31px;height:31px}
+      .record-with-icon{grid-template-columns:48px 1fr}
+    }
+
 </style>
 </head>
 <body>
@@ -361,7 +391,7 @@
 
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px">
         <button id="saveReception" class="btn-success" disabled>内容を確認</button>
-        <button id="finishReception" class="btn-secondary">受付終了</button>
+        <button id="finishReception" class="btn-secondary btn-secondary-action">ホーム画面へ戻る</button>
       </div>
       <div id="rMessage"></div>
       <button id="receptionPdfBtn" class="btn-primary hidden" style="width:100%;margin-top:10px">
@@ -390,8 +420,8 @@
         <div class="confirm-row"><div class="label">その他事項</div><strong id="cOther">-</strong></div>
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px">
-        <button id="editReception" class="btn-secondary">修正する</button>
-        <button id="confirmReception" class="btn-success">受取完了</button>
+        <button id="editReception" class="btn-secondary">内容を修正する</button>
+        <button id="confirmReception" class="btn-success">この衣服を受付する</button>
       </div>
     </div>
   </section>
@@ -425,7 +455,7 @@
         </div>
       </div>
 
-      <button id="finishInventory" class="btn-secondary" style="width:100%;margin-top:14px">準備完了終了</button>
+      <button id="finishInventory" class="btn-secondary btn-secondary-action" style="width:100%;margin-top:14px">ホーム画面へ戻る</button>
     </div>
   </section>
 
@@ -469,11 +499,11 @@
           <div id="handoverConfirmBox" class="hidden">
             <div class="message warn">以下の内容で引き渡しをします。内容をご確認ください。</div>
             <div id="handoverConfirmDetails" class="confirm-grid"></div>
-            <button id="completeHandover" class="btn-success" style="width:100%;margin-top:12px">引渡完了</button>
+            <button id="completeHandover" class="btn-success" style="width:100%;margin-top:12px">引渡を完了する</button>
           </div>
         </div>
 
-        <button id="finishHandoverSession" class="btn-secondary" style="width:100%;margin-top:14px">引渡終了</button>
+        <button id="finishHandoverSession" class="btn-secondary" style="width:100%;margin-top:14px">ホーム画面へ戻る</button>
       </div>
     </div>
   </section>
@@ -544,7 +574,7 @@
   }
 
   // 同じ商品タグが「現在お預かり中」の衣服に使われているかだけを判定。
-  // 引渡完了済みの履歴はタグ再利用を妨げない。
+  // 引渡を完了する済みの履歴はタグ再利用を妨げない。
   function isClothCurrentlyDeposited(clothId){
     return state.records.some(r=>r.cloth===clothId && r.handedOver!==true);
   }
@@ -620,6 +650,63 @@
   function esc(s){
     return String(s ?? "").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]));
   }
+
+  function garmentColor(color){
+    const c=String(color || "").trim();
+    const map=[
+      ["白","#f8fafc"],["ホワイト","#f8fafc"],["黒","#1f2937"],["ブラック","#1f2937"],
+      ["ピンク","#f3a6bf"],["桃","#f3a6bf"],["赤","#dc5a5a"],["レッド","#dc5a5a"],
+      ["青","#5b8fd1"],["ブルー","#5b8fd1"],["紺","#314d76"],["ネイビー","#314d76"],
+      ["水色","#9ecae8"],["緑","#6fa77a"],["グリーン","#6fa77a"],["黄","#e6c853"],
+      ["イエロー","#e6c853"],["オレンジ","#df9858"],["ベージュ","#cdbb98"],
+      ["茶","#8b6b52"],["ブラウン","#8b6b52"],["グレー","#9ca3af"],["灰","#9ca3af"],
+      ["紫","#9a7ac1"],["パープル","#9a7ac1"]
+    ];
+    for(const [key,val] of map){ if(c.includes(key)) return val; }
+    return "#cbd5e1";
+  }
+
+  function garmentIconSvg(type,color){
+    const t=String(type || "").toLowerCase();
+    const fill=garmentColor(color);
+    const stroke=(fill==="#f8fafc") ? "#94a3b8" : "#475569";
+    let shape="";
+
+    if(t.includes("ワイシャツ") || t.includes("シャツ") || t.includes("ブラウス")){
+      shape=`<path d="M10 5l4-2 4 2 4 5-4 3v14H6V13l-4-3 4-5 4 3z"/><path d="M10 5l4 5 4-5"/><path d="M14 10v17"/>`;
+    }else if(t.includes("スカート")){
+      shape=`<path d="M9 5h10l-1 5 5 17H5l5-17z"/><path d="M9 10h10"/>`;
+    }else if(t.includes("ズボン") || t.includes("パンツ") || t.includes("スラックス")){
+      shape=`<path d="M8 4h12l1 23h-6l-1-12-1 12H7z"/><path d="M8 9h12"/>`;
+    }else if(t.includes("ワンピース") || t.includes("ドレス")){
+      shape=`<path d="M10 4l4 4 4-4 3 6-4 4 6 13H5l6-13-4-4z"/><path d="M11 14h6"/>`;
+    }else if(t.includes("コート")){
+      shape=`<path d="M9 4l5 3 5-3 4 6-4 3 2 15H7l2-15-4-3z"/><path d="M14 7v21"/><path d="M11 14h2M16 14h2"/>`;
+    }else if(t.includes("ジャケット") || t.includes("上着")){
+      shape=`<path d="M9 5l5 2 5-2 4 6-4 3v13h-5l-1-11-1 11H7V14l-4-3z"/><path d="M14 7l-3 6 3 3 3-3z"/>`;
+    }else if(t.includes("セーター") || t.includes("ニット") || t.includes("トレーナー")){
+      shape=`<path d="M9 5l5 2 5-2 5 6-4 4-3-3v15H11V12l-3 3-4-4z"/><path d="M11 8h6"/>`;
+    }else{
+      shape=`<path d="M9 5l5 2 5-2 4 6-4 3v13H9V14l-4-3z"/><path d="M11 8h6"/>`;
+    }
+
+    return `<div class="garment-icon" title="${esc(type)}・${esc(color)}">
+      <svg viewBox="0 0 28 32" aria-hidden="true">
+        <g fill="${fill}" stroke="${stroke}" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${shape}</g>
+      </svg>
+    </div>`;
+  }
+
+  function garmentSummaryHtml(record){
+    return `<div class="garment-summary">
+      ${garmentIconSvg(record.type,record.color)}
+      <div>
+        <div class="garment-summary-title">${esc(record.type || "衣服")}・${esc(record.color || "色未設定")}</div>
+        <div class="garment-summary-sub">${esc(record.cloth || "")}</div>
+      </div>
+    </div>`;
+  }
+
 
   /* QR scanner */
   async function openScanner(targetId, afterScan){
@@ -1090,6 +1177,7 @@ th{background:#f3f4f6}
     $("inventoryResult").innerHTML=`
       <div class="message ok"><strong>✓ 商品情報を確認してください</strong></div>
       <div class="card" style="margin-top:10px;margin-bottom:0">
+        ${garmentSummaryHtml(rec)}
         <div class="summary-row"><span>お客様</span><strong>${esc(rec.customerName)}</strong></div>
         <div class="summary-row"><span>顧客コード</span><strong>${esc(rec.customer)}</strong></div>
         <div class="summary-row"><span>商品タグ</span><strong>${esc(rec.cloth)}</strong></div>
@@ -1106,7 +1194,7 @@ th{background:#f3f4f6}
         </div>
 
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:16px">
-          <button id="inventoryBack" class="btn-secondary">もどる</button>
+          <button id="inventoryBack" class="btn-secondary">内容を修正する</button>
           <button id="inventoryComplete" class="btn-success" ${prepDone(rec) ? "disabled" : ""}>
             ${prepDone(rec) ? "準備完了済み" : "完了"}
           </button>
@@ -1153,6 +1241,7 @@ th{background:#f3f4f6}
     $("inventoryResult").innerHTML=`
       <div class="message ok"><strong>✓ 引渡準備を完了しました</strong></div>
       <div class="card" style="margin-top:10px;margin-bottom:0">
+        ${garmentSummaryHtml(updated)}
         <div class="summary-row"><span>お客様</span><strong>${esc(updated.customerName)}</strong></div>
         <div class="summary-row"><span>衣服</span><strong>${esc(updated.type)}・${esc(updated.color)}</strong></div>
         <div class="summary-row"><span>商品タグ</span><strong>${esc(updated.cloth)}</strong></div>
@@ -1222,7 +1311,7 @@ th{background:#f3f4f6}
       const btn=document.createElement("button");
       btn.className="receipt-item"; btn.style.width="100%";
       btn.innerHTML=`
-        <div class="receipt-icon">👕</div>
+        ${garmentIconSvg(item.type,item.color)}
         <div style="text-align:left">
           <div class="receipt-name">${esc(item.type)}・${esc(item.color)}</div>
           <div class="receipt-meta">${esc(item.methods.join("・"))}<br>予定：${esc(formatDate(item.dueDate))} / ${esc(item.deliveryMethod)} / ${esc(item.other)}</div>
@@ -1265,10 +1354,11 @@ th{background:#f3f4f6}
     const rec=state.records.find(r=>r.cloth===scanned);
     if(!rec || rec.customer!==customer){$("hMessage").innerHTML='<div class="message danger">⚠ この衣服は別のお客様のものです。</div>';return}
     if(!prepDone(rec)){$("hMessage").innerHTML='<div class="message danger">⚠ この衣服はまだ「引渡準備：未完了」です。先に「準備完了」で商品タグを読み取ってください。</div>';return}
-    if(rec.handedOver){$("hMessage").innerHTML='<div class="message danger">⚠ この衣服はすでに引渡完了です。</div>';return}
+    if(rec.handedOver){$("hMessage").innerHTML='<div class="message danger">⚠ この衣服はすでに引渡を完了するです。</div>';return}
     state.matchedHandoverCloth=scanned;
     $("hMessage").innerHTML='<div class="message ok">✓ お客様と衣服の情報が一致しました。</div>';
     $("handoverConfirmDetails").innerHTML=`
+      ${garmentSummaryHtml(rec)}
       <div class="confirm-row"><div class="label">お客様</div><strong>${esc(rec.customerName)}</strong></div>
       <div class="confirm-row"><div class="label">衣服</div><strong>${esc(rec.type)}・${esc(rec.color)}</strong></div>
       <div class="confirm-row"><div class="label">クリーニング</div><strong>${esc(rec.methods.join("・"))}</strong></div>
@@ -1303,11 +1393,16 @@ th{background:#f3f4f6}
     if(!state.records.length){box.innerHTML='<div class="top-note">現在0点です。</div>';return}
     state.records.slice().reverse().forEach(r=>{
       const div=document.createElement("div"); div.className="record";
-      div.innerHTML=`<strong>${esc(r.customerName)}｜${esc(r.type)}・${esc(r.color)}</strong>
-      <small>${esc(r.cloth)} / ${esc(r.methods.join("・"))}<br>
-      引渡予定：${esc(formatDate(r.dueDate))} / ${esc(r.deliveryMethod)} / ${esc(r.other)}<br>
-      引渡準備：<span class="ready-badge ${prepDone(r) ? "done" : "pending"}">${prepDone(r) ? "完了" : "未完了"}</span><br>
-      引渡：<span class="ready-badge ${r.handedOver ? "done" : "pending"}">${r.handedOver ? "完了" : "未完了"}</span></small>`;
+      div.innerHTML=`<div class="record-with-icon">
+        ${garmentIconSvg(r.type,r.color)}
+        <div>
+          <strong>${esc(r.customerName)}｜${esc(r.type)}・${esc(r.color)}</strong>
+          <small>${esc(r.cloth)} / ${esc(r.methods.join("・"))}<br>
+          引渡予定：${esc(formatDate(r.dueDate))} / ${esc(r.deliveryMethod)} / ${esc(r.other)}<br>
+          引渡準備：<span class="ready-badge ${prepDone(r) ? "done" : "pending"}">${prepDone(r) ? "完了" : "未完了"}</span><br>
+          引渡：<span class="ready-badge ${r.handedOver ? "done" : "pending"}">${r.handedOver ? "完了" : "未完了"}</span></small>
+        </div>
+      </div>`;
       box.appendChild(div);
     });
   }
