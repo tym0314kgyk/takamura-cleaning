@@ -373,6 +373,75 @@
       .special-note-choice{grid-template-columns:repeat(4,minmax(0,1fr))}
     }
 
+
+    /* 選択中のボタンをより分かりやすくする */
+    .choice-grid label span{
+      position:relative;
+      padding-left:34px;
+    }
+    .choice-grid label span::before{
+      content:"";
+      position:absolute;
+      left:11px;
+      top:50%;
+      transform:translateY(-50%);
+      width:16px;
+      height:16px;
+      border-radius:50%;
+      border:1.5px solid #c7d1dc;
+      background:#fff;
+      box-sizing:border-box;
+    }
+    .choice-grid input:checked + span::before{
+      content:"✓";
+      display:grid;
+      place-items:center;
+      border-color:#24557a;
+      background:#24557a;
+      color:#fff;
+      font-size:11px;
+      font-weight:900;
+      line-height:1;
+    }
+    .color-choice label span{padding-left:34px}
+    .color-choice label span i{margin-left:2px}
+
+    .date-chip,
+    .same-date-chip{
+      position:relative;
+      padding-left:28px;
+    }
+    .date-chip::before,
+    .same-date-chip::before{
+      content:"";
+      position:absolute;
+      left:9px;
+      top:50%;
+      transform:translateY(-50%);
+      width:14px;
+      height:14px;
+      border-radius:50%;
+      border:1.5px solid #c7d1dc;
+      background:#fff;
+      box-sizing:border-box;
+    }
+    .date-chip.active::before,
+    .same-date-chip.active::before{
+      content:"✓";
+      display:grid;
+      place-items:center;
+      border-color:#24557a;
+      background:#24557a;
+      color:#fff;
+      font-size:10px;
+      font-weight:900;
+      line-height:1;
+    }
+    @media(max-width:480px){
+      .choice-grid label span{padding-left:32px}
+      .date-chip,.same-date-chip{padding-left:27px}
+    }
+
 </style>
 </head>
 <body>
@@ -827,8 +896,14 @@
 
   function chooseDueDate(dateStr, sourceButton){
     $("rDueDate").value=dateStr;
-    document.querySelectorAll(".date-chip,.same-date-chip").forEach(b=>b.classList.remove("active"));
-    if(sourceButton) sourceButton.classList.add("active");
+    document.querySelectorAll(".date-chip,.same-date-chip").forEach(b=>{
+      b.classList.remove("active");
+      b.setAttribute("aria-pressed","false");
+    });
+    if(sourceButton){
+      sourceButton.classList.add("active");
+      sourceButton.setAttribute("aria-pressed","true");
+    }
     $("rDueDate").dispatchEvent(new Event("input",{bubbles:true}));
     $("rDueDate").dispatchEvent(new Event("change",{bubbles:true}));
   }
@@ -1114,9 +1189,15 @@
 
   // カレンダーで直接日付を選んだ場合の表示同期
   $("rDueDate").addEventListener("change",()=>{
-    document.querySelectorAll(".date-chip,.same-date-chip").forEach(b=>b.classList.remove("active"));
+    document.querySelectorAll(".date-chip,.same-date-chip").forEach(b=>{
+      b.classList.remove("active");
+      b.setAttribute("aria-pressed","false");
+    });
     document.querySelectorAll(".same-date-chip").forEach(b=>{
-      if(b.dataset.date===$("rDueDate").value) b.classList.add("active");
+      if(b.dataset.date===$("rDueDate").value){
+        b.classList.add("active");
+        b.setAttribute("aria-pressed","true");
+      }
     });
   });
 
